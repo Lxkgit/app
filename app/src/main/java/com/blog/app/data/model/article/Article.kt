@@ -20,7 +20,25 @@ data class Article(
     val updateTime: String,
     val articleTypes: List<ArticleTypeSummary>,
     val articleLabels: List<ArticleLabel>
-)
+) {
+    /**
+     * Markdown content exposed for UI compatibility.
+     */
+    val content: String
+        get() = contentMd
+
+    /**
+     * Category names combined for legacy UI display.
+     */
+    val typeName: String
+        get() = articleTypes.joinToString(" · ") { it.typeName }
+
+    /**
+     * The current article API does not include an author name in userVo for the list data.
+     */
+    val authorName: String
+        get() = ""
+}
 
 /**
  * Article category information embedded in an article response.
