@@ -1,0 +1,1 @@
+# BlogApp custom ProGuard rules
