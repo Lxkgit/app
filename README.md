@@ -4,28 +4,48 @@
 
 ## 当前状态
 
-- Android 原生项目已初始化
-- Kotlin
+- Android 原生项目
+- Kotlin 2.0.21
 - Jetpack Compose
 - Material 3
 - Java 17
+- Android Gradle Plugin 8.7.3
+- compileSdk 35
 - minSdk 26
 - targetSdk 35
-- applicationId：`com.lxkgit.blogapp`
+- namespace：`com.blog.app`
+- applicationId：`com.blog.app`
+
+## 项目结构
+
+```text
+app/src/main/java/com/blog/app/
+├── MainActivity.kt
+├── core/
+│   └── config/
+├── data/
+│   ├── api/
+│   ├── model/
+│   └── repository/
+├── navigation/
+└── ui/
+    └── home/
+```
 
 ## 后续规划
 
 1. 登录与注册
-2. 博客首页
-3. 文章列表与详情
-4. 分类、标签与搜索
-5. 评论
-6. 用户中心
-7. 与博客现有后端 API 对接
-8. 网络层、Token、缓存和异常处理
+2. OAuth2 / OIDC 登录
+3. 博客首页
+4. 文章列表与详情
+5. 分类、标签与搜索
+6. 评论
+7. 用户中心
+8. 与博客现有后端 API 对接
+9. 网络层、Token、缓存和异常处理
 
 ## 开发说明
 
-项目代码以便于长期维护为目标进行组织。类、方法和模块会保持职责清晰，后续功能按业务模块逐步拆分。
+项目代码以便于长期维护为目标进行组织。类、方法和模块保持职责清晰，按业务模块逐步拆分。
 
-> 注意：Kotlin 不支持使用 `#` 作为注释语法，因此 Kotlin 方法内部注释使用 `//`；方法、类等声明外部使用 `/** */` 文档注释。
+Kotlin 不支持使用 `#` 作为注释语法，因此 Kotlin 方法内部注释使用 `//`；类、方法等声明外部使用 `/** */` 文档注释。
