@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -25,14 +26,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.blog.app.data.model.article.Article
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 
 /**
  * Blog application home screen.
@@ -108,7 +112,22 @@ private fun ArticleList(
     onArticleClick: (Article) -> Unit,
     onLoadMore: () -> Unit
 ) {
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(listState, state.articles.size, state.hasMore, state.isLoadingMore) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
+            .map { lastIndex -> lastIndex to state.articles.lastIndex }
+            .distinctUntilChanged()
+            .filter { (lastIndex, lastArticleIndex) ->
+                state.hasMore && !state.isLoadingMore && lastArticleIndex >= 0 && lastIndex >= lastArticleIndex - 1
+            }
+            .collect {
+                onLoadMore()
+            }
+    }
+
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -116,10 +135,7 @@ private fun ArticleList(
         itemsIndexed(
             items = state.articles,
             key = { index, article -> if (article.id != 0L) article.id else "article-$index-${article.title}" }
-        ) { index, article ->
-            if (index >= state.articles.lastIndex - 1 && state.hasMore) {
-                onLoadMore()
-            }
+        ) { _, article ->
             ArticleCard(article, onArticleClick)
         }
         if (state.isLoadingMore) {
@@ -152,9 +168,7 @@ private fun ArticleList(
  */
 @Composable
 private fun ArticleCard(article: Article, onArticleClick: (Article) -> Unit) {
-    val preview = remember(article.content, article.summary) {
-        if (article.summary.isNotBlank()) article.summary else stripMarkdown(article.content).take(160)
-    }
+    val preview = if (article.summary.isNotBlank()) article.summary else stripMarkdown(article.content).take(160)
     Card(
         modifier = Modifier
             .fillMaxWidth()
