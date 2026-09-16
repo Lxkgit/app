@@ -112,6 +112,9 @@ class ArticleRepository(
     private fun JsonElement.objectValue(name: String): JsonObject =
         (this as? JsonObject)?.get(name) as? JsonObject ?: JsonObject(emptyMap())
 
+    private fun JsonElement.arrayValue(name: String): JsonArray? =
+        (this as? JsonObject)?.get(name) as? JsonArray
+
     private fun JsonObject.arrayValue(name: String): JsonArray? =
         this[name] as? JsonArray
 
