@@ -41,10 +41,11 @@ class HomeViewModel(
     }
 
     /**
-     * Loads the first page of articles for the selected category.
+     * Loads the first page using the real server pagination fields.
      */
     fun loadFirstPage() {
         viewModelScope.launch {
+            val selectedType = _uiState.value.selectedType
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 isLoadingMore = false,
@@ -54,13 +55,13 @@ class HomeViewModel(
                 hasMore = true
             )
             runCatching {
-                repository.getArticles(1, pageSize, _uiState.value.selectedType)
+                repository.getArticles(1, pageSize, selectedType)
             }.onSuccess { result ->
                 _uiState.value = _uiState.value.copy(
-                    articles = result.records,
+                    articles = result.list,
                     isLoading = false,
                     hasMore = result.hasNext(),
-                    page = result.current,
+                    page = result.page,
                     errorMessage = null
                 )
             }.onFailure { error ->
@@ -73,7 +74,7 @@ class HomeViewModel(
     }
 
     /**
-     * Loads the next article page and appends it to the current list.
+     * Loads and appends the next server page.
      */
     fun loadNextPage() {
         val state = _uiState.value
@@ -85,12 +86,11 @@ class HomeViewModel(
             runCatching {
                 repository.getArticles(state.page + 1, pageSize, state.selectedType)
             }.onSuccess { result ->
-                val merged = _uiState.value.articles + result.records
                 _uiState.value = _uiState.value.copy(
-                    articles = merged.distinctBy { if (it.id == 0L) "${it.title}-${it.createTime}" else it.id },
+                    articles = _uiState.value.articles + result.list,
                     isLoadingMore = false,
-                    hasMore = result.hasNext() && result.records.isNotEmpty(),
-                    page = result.current,
+                    hasMore = result.hasNext() && result.list.isNotEmpty(),
+                    page = result.page,
                     errorMessage = null
                 )
             }.onFailure { error ->
@@ -103,7 +103,7 @@ class HomeViewModel(
     }
 
     /**
-     * Selects an article category and reloads the first page.
+     * Selects a category and reloads the first page.
      */
     fun selectType(typeId: Long) {
         if (_uiState.value.selectedType == typeId) {
@@ -114,7 +114,7 @@ class HomeViewModel(
     }
 
     /**
-     * Retries the failed first-page request.
+     * Retries the first page request.
      */
     fun retry() {
         loadFirstPage()
@@ -124,13 +124,8 @@ class HomeViewModel(
         viewModelScope.launch {
             runCatching { repository.getArticleTypes() }
                 .onSuccess { categories ->
-                    _uiState.value = _uiState.value.copy(categories = flatten(categories))
+                    _uiState.value = _uiState.value.copy(categories = categories)
                 }
         }
     }
-
-    private fun flatten(categories: List<ArticleType>): List<ArticleType> =
-        categories.flatMap { category ->
-            listOf(category) + flatten(category.children)
-        }
 }
