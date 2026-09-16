@@ -1,17 +1,16 @@
 package com.blog.app.data.model.article
 
 /**
- * Paginated article result.
+ * Paginated result returned by the blog article service.
  */
 data class ArticlePage(
-    val records: List<Article>,
-    val total: Long,
-    val current: Int,
+    val page: Int,
     val size: Int,
-    val pages: Int
+    val total: Long,
+    val list: List<Article>
 ) {
     /**
-     * Indicates whether another page can be requested.
+     * Indicates whether another page is available according to the server total.
      */
-    fun hasNext(): Boolean = current < pages || records.size >= size
+    fun hasNext(): Boolean = page * size.toLong() < total
 }
