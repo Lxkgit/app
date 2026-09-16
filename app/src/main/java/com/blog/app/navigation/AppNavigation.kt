@@ -3,6 +3,7 @@ package com.blog.app.navigation
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -20,6 +21,7 @@ import com.blog.app.ui.home.HomeScreen
 /**
  * Application navigation entry point.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation() {
     var selectedArticle by remember { mutableStateOf<Article?>(null) }
