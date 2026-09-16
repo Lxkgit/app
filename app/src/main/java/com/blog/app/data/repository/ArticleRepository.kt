@@ -10,8 +10,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
@@ -23,11 +21,11 @@ class ArticleRepository(
     /**
      * Loads one page of public articles using the website's default filters.
      */
-    suspend fun getArticles(pageNum: Int, pageSize: Int): ArticlePage {
+    suspend fun getArticles(pageNum: Int, pageSize: Int, type: Long = 0L): ArticlePage {
         val response = api.getArticles(
             pageNum = pageNum,
             pageSize = pageSize,
-            type = 0,
+            type = type,
             selectUser = 0,
             selectStatus = "1,2",
             sortType = "0,1"
@@ -48,9 +46,13 @@ class ArticleRepository(
      */
     suspend fun getArticleTypes(): List<ArticleType> {
         val response = api.getArticleTypes()
-        val array = findArray(unwrap(response), "records", "list", "rows", "items")
-            ?: response.asArrayOrNull()
-            ?: return emptyList()
+        val root = response as? JsonObject
+        val data = root?.get("data")
+        val array = when {
+            data is JsonArray -> data
+            else -> findArray(unwrap(response), "records", "list", "rows", "items")
+                ?: response.asArrayOrNull()
+        } ?: return emptyList()
         return array.map(::parseType)
     }
 
