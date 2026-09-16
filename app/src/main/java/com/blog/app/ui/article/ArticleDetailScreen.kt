@@ -4,6 +4,7 @@ import android.text.method.LinkMovementMethod
 import android.widget.TextView
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,10 +16,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.blog.app.data.model.article.Article
+import com.bumptech.glide.Glide
 import io.noties.markwon.Markwon
 import io.noties.markwon.ext.strikethrough.StrikethroughPlugin
 import io.noties.markwon.ext.tables.TablePlugin
 import io.noties.markwon.ext.tasklist.TaskListPlugin
+import io.noties.markwon.image.glide.GlideImagesPlugin
 
 /**
  * Displays an article and renders its Markdown body.
@@ -30,6 +33,7 @@ fun ArticleDetailScreen(article: Article) {
         .usePlugin(TablePlugin.create(context))
         .usePlugin(TaskListPlugin.create(context))
         .usePlugin(StrikethroughPlugin.create())
+        .usePlugin(GlideImagesPlugin.create(Glide.with(context)))
         .build()
 
     Column(
@@ -64,7 +68,7 @@ fun ArticleDetailScreen(article: Article) {
             )
         } else {
             AndroidView(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxWidth(),
                 factory = {
                     TextView(it).apply {
                         textSize = 16f
