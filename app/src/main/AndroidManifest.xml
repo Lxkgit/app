@@ -7,6 +7,7 @@
         android:allowBackup="true"
         android:label="Blog"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.BlogApp">
         <activity
             android:name=".MainActivity"
