@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.lxkgit.blogapp"
+    namespace = "com.blog.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.lxkgit.blogapp"
+        applicationId = "com.blog.app"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
