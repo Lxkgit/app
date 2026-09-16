@@ -10,11 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -35,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.blog.app.data.model.article.Article
+import com.blog.app.data.model.article.ArticleType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -59,7 +58,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            CategoryBar(state, viewModel)
+            CategoryBar(state.categories, state.selectedType, viewModel::selectType)
             when {
                 state.isLoading && state.articles.isEmpty() -> LoadingView()
                 state.errorMessage != null && state.articles.isEmpty() -> ErrorView(
@@ -78,10 +77,14 @@ fun HomeScreen(
 }
 
 /**
- * Displays the article category filters.
+ * Displays the root categories returned by the category tree API.
  */
 @Composable
-private fun CategoryBar(state: HomeUiState, viewModel: HomeViewModel) {
+private fun CategoryBar(
+    categories: List<ArticleType>,
+    selectedType: Long,
+    onSelect: (Long) -> Unit
+) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
@@ -89,23 +92,23 @@ private fun CategoryBar(state: HomeUiState, viewModel: HomeViewModel) {
     ) {
         item {
             FilterChip(
-                selected = state.selectedType == 0L,
-                onClick = { viewModel.selectType(0L) },
+                selected = selectedType == 0L,
+                onClick = { onSelect(0L) },
                 label = { Text("全部") }
             )
         }
-        items(state.categories, key = { it.id }) { category ->
+        items(categories, key = { it.id }) { category ->
             FilterChip(
-                selected = state.selectedType == category.id,
-                onClick = { viewModel.selectType(category.id) },
-                label = { Text(category.name) }
+                selected = selectedType == category.id,
+                onClick = { onSelect(category.id) },
+                label = { Text(category.typeName) }
             )
         }
     }
 }
 
 /**
- * Displays the paginated article feed.
+ * Displays the paginated article feed and requests another page near the bottom.
  */
 @Composable
 private fun ArticleList(
@@ -133,10 +136,10 @@ private fun ArticleList(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        itemsIndexed(
+        items(
             items = state.articles,
-            key = { index, article -> if (article.id != 0L) article.id else "article-$index-${article.title}" }
-        ) { _, article ->
+            key = { it.id }
+        ) { article ->
             ArticleCard(article, onArticleClick)
         }
         if (state.isLoadingMore) {
@@ -165,11 +168,10 @@ private fun ArticleList(
 }
 
 /**
- * Displays one article summary card.
+ * Displays an article card using the exact fields returned by the article API.
  */
 @Composable
 private fun ArticleCard(article: Article, onArticleClick: (Article) -> Unit) {
-    val preview = if (article.summary.isNotBlank()) article.summary else stripMarkdown(article.content).take(160)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -182,22 +184,36 @@ private fun ArticleCard(article: Article, onArticleClick: (Article) -> Unit) {
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row {
-                if (article.typeName.isNotBlank()) {
-                    Text(article.typeName, style = MaterialTheme.typography.labelMedium)
-                    Spacer(modifier = Modifier.width(10.dp))
-                }
-                Text(article.createTime, style = MaterialTheme.typography.labelMedium)
-            }
-            if (preview.isNotBlank()) {
-                Spacer(modifier = Modifier.height(10.dp))
+            if (article.contentMemo.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = preview,
+                    text = article.contentMemo,
                     maxLines = 3,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
+            if (article.articleTypes.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    article.articleTypes.take(3).forEach { type ->
+                        Text(
+                            text = type.typeName,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = buildString {
+                    append(article.createTime)
+                    append("  ·  浏览 ")
+                    append(article.browseCount)
+                    append("  ·  点赞 ")
+                    append(article.likeCount)
+                },
+                style = MaterialTheme.typography.labelSmall
+            )
         }
     }
 }
@@ -248,11 +264,3 @@ private fun ErrorView(message: String?, onRetry: () -> Unit) {
         }
     }
 }
-
-private fun stripMarkdown(markdown: String): String = markdown
-    .replace(Regex("```[\\s\\S]*?```"), "")
-    .replace(Regex("!\\[[^]]*]\\([^)]*\\)"), "")
-    .replace(Regex("\\[([^]]+)]\\([^)]*\\)"), "$1")
-    .replace(Regex("[#>*_`~-]"), "")
-    .replace(Regex("\\s+"), " ")
-    .trim()
