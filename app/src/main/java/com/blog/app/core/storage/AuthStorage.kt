@@ -9,8 +9,9 @@ object AuthStorage {
     private const val PREFS_NAME = "blog_auth"
     private const val ACCESS_TOKEN = "access_token"
     private const val REFRESH_TOKEN = "refresh_token"
-    private const val EXPIRES_IN = "expires_in"
+    private const val EXPIRES_AT = "expires_at"
     private const val USERNAME = "username"
+    private const val AUTH_STATE = "auth_state"
 
     private var preferences: android.content.SharedPreferences? = null
 
@@ -27,9 +28,14 @@ object AuthStorage {
     fun accessToken(): String? = preferences?.getString(ACCESS_TOKEN, null)
 
     /**
-     * Returns whether a token is currently stored.
+     * Returns the stored refresh token.
      */
-    fun isLoggedIn(): Boolean = !accessToken().isNullOrBlank()
+    fun refreshToken(): String? = preferences?.getString(REFRESH_TOKEN, null)
+
+    /**
+     * Returns whether a token is currently stored and not expired.
+     */
+    fun isLoggedIn(): Boolean = !accessToken().isNullOrBlank() && expiresAt() > System.currentTimeMillis()
 
     /**
      * Returns the stored login name.
@@ -37,19 +43,31 @@ object AuthStorage {
     fun username(): String = preferences?.getString(USERNAME, "").orEmpty()
 
     /**
-     * Returns the stored access token lifetime in seconds.
+     * Returns the access token expiration timestamp in milliseconds.
      */
-    fun expiresIn(): Long = preferences?.getLong(EXPIRES_IN, 0L) ?: 0L
+    fun expiresAt(): Long = preferences?.getLong(EXPIRES_AT, 0L) ?: 0L
+
+    /**
+     * Returns the persisted AppAuth state.
+     */
+    fun authState(): String? = preferences?.getString(AUTH_STATE, null)
 
     /**
      * Saves a successful OAuth2 login.
      */
-    fun saveLogin(username: String, accessToken: String, refreshToken: String?, expiresIn: Long) {
+    fun saveLogin(
+        username: String,
+        accessToken: String,
+        refreshToken: String?,
+        expiresIn: Long,
+        authState: String
+    ) {
         preferences?.edit()
             ?.putString(USERNAME, username)
             ?.putString(ACCESS_TOKEN, accessToken)
             ?.putString(REFRESH_TOKEN, refreshToken)
-            ?.putLong(EXPIRES_IN, expiresIn)
+            ?.putLong(EXPIRES_AT, System.currentTimeMillis() + expiresIn * 1000L)
+            ?.putString(AUTH_STATE, authState)
             ?.apply()
     }
 
