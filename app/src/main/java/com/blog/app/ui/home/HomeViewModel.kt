@@ -3,7 +3,6 @@ package com.blog.app.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.blog.app.data.model.article.Article
-import com.blog.app.data.model.article.ArticleType
 import com.blog.app.data.repository.ArticleRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,8 +14,6 @@ import kotlinx.coroutines.launch
  */
 data class HomeUiState(
     val articles: List<Article> = emptyList(),
-    val categories: List<ArticleType> = emptyList(),
-    val selectedType: Long = 0L,
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
     val hasMore: Boolean = true,
@@ -25,7 +22,7 @@ data class HomeUiState(
 )
 
 /**
- * Loads and manages the paginated article feed.
+ * Loads and manages the home article feed.
  */
 class HomeViewModel(
     private val repository: ArticleRepository = ArticleRepository()
@@ -36,16 +33,14 @@ class HomeViewModel(
     private val pageSize = 5
 
     init {
-        loadCategories()
         loadFirstPage()
     }
 
     /**
-     * Loads the first page using the real server pagination fields.
+     * Loads the first page from the normal home article endpoint.
      */
     fun loadFirstPage() {
         viewModelScope.launch {
-            val selectedType = _uiState.value.selectedType
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 isLoadingMore = false,
@@ -55,7 +50,7 @@ class HomeViewModel(
                 hasMore = true
             )
             runCatching {
-                repository.getArticles(1, pageSize, selectedType)
+                repository.getArticles(1, pageSize)
             }.onSuccess { result ->
                 _uiState.value = _uiState.value.copy(
                     articles = result.list,
@@ -84,7 +79,7 @@ class HomeViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoadingMore = true, errorMessage = null)
             runCatching {
-                repository.getArticles(state.page + 1, pageSize, state.selectedType)
+                repository.getArticles(state.page + 1, pageSize)
             }.onSuccess { result ->
                 _uiState.value = _uiState.value.copy(
                     articles = _uiState.value.articles + result.list,
@@ -103,29 +98,9 @@ class HomeViewModel(
     }
 
     /**
-     * Selects a category and reloads the first page.
-     */
-    fun selectType(typeId: Long) {
-        if (_uiState.value.selectedType == typeId) {
-            return
-        }
-        _uiState.value = _uiState.value.copy(selectedType = typeId)
-        loadFirstPage()
-    }
-
-    /**
      * Retries the first page request.
      */
     fun retry() {
         loadFirstPage()
-    }
-
-    private fun loadCategories() {
-        viewModelScope.launch {
-            runCatching { repository.getArticleTypes() }
-                .onSuccess { categories ->
-                    _uiState.value = _uiState.value.copy(categories = categories)
-                }
-        }
     }
 }
