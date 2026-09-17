@@ -52,6 +52,7 @@ fun FileManagerScreen(
     viewModel: FileManagerViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val errorMessage = state.errorMessage
     var showCreateDialog by remember { mutableStateOf(false) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -77,9 +78,9 @@ fun FileManagerScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            if (!state.errorMessage.isNullOrBlank()) {
+            if (!errorMessage.isNullOrBlank()) {
                 Text(
-                    state.errorMessage,
+                    errorMessage,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     color = MaterialTheme.colorScheme.error
                 )
