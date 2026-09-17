@@ -23,7 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
- * Personal page with the blog OAuth2 authentication flow.
+ * 个人页面，负责博客 OAuth2 登录流程。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,7 +67,7 @@ fun UserScreen(
 }
 
 /**
- * Displays the blog login entry point.
+ * 显示博客登录入口。
  */
 @Composable
 private fun LoginView(
@@ -85,7 +85,7 @@ private fun LoginView(
             style = MaterialTheme.typography.headlineMedium
         )
         Text(
-            text = "点击登录后将在浏览器中完成博客账号认证。",
+            text = "点击登录后将在应用内完成博客账号认证。",
             style = MaterialTheme.typography.bodyMedium
         )
         if (!errorMessage.isNullOrBlank()) {
@@ -110,7 +110,7 @@ private fun LoginView(
 }
 
 /**
- * Displays the authenticated user area.
+ * 显示已认证的用户区域。
  */
 @Composable
 private fun UserInfoView(
