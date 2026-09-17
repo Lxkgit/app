@@ -5,8 +5,9 @@ import android.net.Uri
 import android.util.Base64
 import com.blog.app.core.config.ApiConfig
 import com.blog.app.core.storage.AuthStorage
-import net.openid.appauth.AuthorizationException
+import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationRequest
+import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
 import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.CodeVerifierUtil
@@ -63,8 +64,14 @@ class AuthRepository {
             return
         }
 
-        if (request.state != state) {
+        if (request.state.isNullOrBlank() || request.state != state) {
             onResult(Result.failure(IllegalStateException("登录状态校验失败")))
+            return
+        }
+
+        val authorizationResponse = AuthorizationResponse.fromUri(callbackUri)
+        if (authorizationResponse == null || authorizationResponse.authorizationCode.isNullOrBlank()) {
+            onResult(Result.failure(IllegalStateException("登录授权响应无效")))
             return
         }
 
@@ -97,12 +104,16 @@ class AuthRepository {
                     ((expirationTime - System.currentTimeMillis()).coerceAtLeast(0L) / 1000L)
                 } ?: 0L
 
+                val authState = AuthState(serviceConfiguration())
+                authState.update(authorizationResponse, tokenException)
+                authState.update(tokenResponse, tokenException)
+
                 AuthStorage.saveLogin(
                     username = username,
                     accessToken = accessToken,
                     refreshToken = tokenResponse.refreshToken,
                     expiresIn = expiresIn,
-                    authState = tokenResponse.jsonSerializeString()
+                    authState = authState.jsonSerializeString()
                 )
                 onResult(Result.success(Unit))
             } finally {
