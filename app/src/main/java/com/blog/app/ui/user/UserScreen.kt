@@ -178,29 +178,25 @@ private fun UserInfoView(
                     style = MaterialTheme.typography.titleMedium
                 )
             }
+
             items(category.children, key = { it.id }) { menu ->
                 PermissionCard(
                     menu = menu,
                     onClick = if (menu.menuName == "文件云盘") onFileManager else null
                 )
             }
-        }
 
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            Text(
-                "设备监控",
-                modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
-                style = MaterialTheme.typography.titleMedium
-            )
-        }
-        item {
-            CameraPermissionCard(onClick = onCamera)
+            if (category.menuName == "设备管理") {
+                item {
+                    CameraPermissionCard(onClick = onCamera)
+                }
+            }
         }
     }
 }
 
 /**
- * 摄像头监控入口。
+ * 摄像头入口。
  */
 @Composable
 private fun CameraPermissionCard(onClick: () -> Unit) {
@@ -220,7 +216,7 @@ private fun CameraPermissionCard(onClick: () -> Unit) {
                 contentDescription = null,
                 modifier = Modifier.size(28.dp)
             )
-            Text("摄像头监控", style = MaterialTheme.typography.titleMedium)
+            Text("摄像头", style = MaterialTheme.typography.titleMedium)
             Text("实时查看", style = MaterialTheme.typography.bodySmall)
         }
     }
