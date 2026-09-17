@@ -47,6 +47,7 @@ fun UserScreen(
     onLogin: () -> Unit,
     onSettings: () -> Unit,
     onFileManager: () -> Unit,
+    onCamera: () -> Unit,
     refreshKey: Int = 0,
     viewModel: UserViewModel = viewModel()
 ) {
@@ -78,7 +79,8 @@ fun UserScreen(
             UserInfoView(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 state = state,
-                onFileManager = onFileManager
+                onFileManager = onFileManager,
+                onCamera = onCamera
             )
         } else {
             LoginView(
@@ -130,7 +132,8 @@ private fun LoginView(
 private fun UserInfoView(
     modifier: Modifier,
     state: UserUiState,
-    onFileManager: () -> Unit
+    onFileManager: () -> Unit,
+    onCamera: () -> Unit
 ) {
     LazyColumn(
         modifier = modifier,
@@ -162,6 +165,29 @@ private fun UserInfoView(
             items(category.children, key = { it.id }) { menu ->
                 PermissionCard(menu = menu, onClick = if (menu.menuName == "文件云盘") onFileManager else null)
             }
+        }
+        item {
+            Text(
+                "设备监控",
+                modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+        item {
+            PermissionCard(
+                menu = UserMenu(
+                    id = -1,
+                    parentId = 0,
+                    menuName = "摄像头监控",
+                    menuIcon = "",
+                    menuPath = "/camera",
+                    auth = "",
+                    menuType = 1,
+                    sort = 0,
+                    children = emptyList()
+                ),
+                onClick = onCamera
+            )
         }
     }
 }
