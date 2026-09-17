@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
@@ -13,6 +12,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -26,7 +26,9 @@ import com.blog.app.R
 import com.blog.app.data.model.article.Article
 import com.blog.app.ui.article.ArticleDetailScreen
 import com.blog.app.ui.article.ArticleListScreen
+import com.blog.app.ui.file.FileManagerScreen
 import com.blog.app.ui.home.HomeScreen
+import com.blog.app.ui.settings.SettingsScreen
 import com.blog.app.ui.user.UserScreen
 
 /**
@@ -39,6 +41,8 @@ fun AppNavigation(
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var selectedArticle by remember { mutableStateOf<Article?>(null) }
+    var showSettings by remember { mutableStateOf(false) }
+    var showFileManager by remember { mutableStateOf(false) }
 
     if (selectedArticle != null) {
         val goBack = { selectedArticle = null }
@@ -50,10 +54,7 @@ fun AppNavigation(
                     title = { Text("文章详情") },
                     navigationIcon = {
                         IconButton(onClick = goBack) {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_back),
-                                contentDescription = "返回"
-                            )
+                            Icon(painterResource(R.drawable.icon_back), contentDescription = "返回")
                         }
                     }
                 )
@@ -63,6 +64,24 @@ fun AppNavigation(
                 ArticleDetailScreen(selectedArticle!!)
             }
         }
+        return
+    }
+
+    if (showFileManager) {
+        BackHandler { showFileManager = false }
+        FileManagerScreen(onBack = { showFileManager = false })
+        return
+    }
+
+    if (showSettings) {
+        BackHandler { showSettings = false }
+        SettingsScreen(
+            onBack = { showSettings = false },
+            onLogout = {
+                showSettings = false
+                selectedTab = 2
+            }
+        )
         return
     }
 
@@ -95,7 +114,11 @@ fun AppNavigation(
             when (selectedTab) {
                 0 -> HomeScreen(onArticleClick = { selectedArticle = it })
                 1 -> ArticleListScreen(onArticleClick = { selectedArticle = it })
-                2 -> UserScreen(onLogin = onLogin)
+                2 -> UserScreen(
+                    onLogin = onLogin,
+                    onSettings = { showSettings = true },
+                    onFileManager = { showFileManager = true }
+                )
             }
         }
     }
