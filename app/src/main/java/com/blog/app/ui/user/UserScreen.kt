@@ -176,14 +176,11 @@ private fun UserInfoView(
         item {
             PermissionCard(
                 menu = UserMenu(
-                    id = -1,
-                    parentId = 0,
+                    id = -1L,
                     menuName = "摄像头监控",
                     menuIcon = "",
-                    menuPath = "/camera",
                     auth = "",
                     menuType = 1,
-                    sort = 0,
                     children = emptyList()
                 ),
                 onClick = onCamera
