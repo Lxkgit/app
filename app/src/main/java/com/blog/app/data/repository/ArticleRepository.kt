@@ -21,16 +21,23 @@ class ArticleRepository(
     private val api: ArticleApi = NetworkModule.create(ArticleApi::class.java)
 ) {
     /**
-     * Loads one page using the same filters as the website home page.
+     * Loads the home article feed without category filtering.
      */
-    suspend fun getArticles(pageNum: Int, pageSize: Int, type: Long = 0L): ArticlePage {
+    suspend fun getArticles(pageNum: Int, pageSize: Int): ArticlePage =
+        getArticles(pageNum, pageSize, null)
+
+    /**
+     * Loads articles with an optional category filter.
+     */
+    suspend fun getArticles(pageNum: Int, pageSize: Int, articleType: Long?): ArticlePage {
         val response = api.getArticles(
             pageNum = pageNum,
             pageSize = pageSize,
-            type = type,
+            type = 0L,
             selectUser = 0,
             selectStatus = "1,2",
-            sortType = "0,1"
+            sortType = "0,1",
+            articleType = articleType
         )
         val result = response.objectValue("result")
         val list = result.arrayValue("list")?.map(::parseArticle).orEmpty()
