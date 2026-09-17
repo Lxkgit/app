@@ -10,6 +10,11 @@ object ApiConfig {
     const val BASE_URL = "http://124.221.195.130/api/content/"
 
     /**
+     * 博客文件服务基础地址。
+     */
+    const val FILE_BASE_URL = "http://124.221.195.130/api/file/"
+
+    /**
      * 对外提供给 Android 使用的 OAuth2/OIDC 授权服务基础地址。
      */
     const val AUTH_BASE_URL = "http://124.221.195.130/auth/"
