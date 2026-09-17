@@ -2,32 +2,19 @@ package com.blog.app
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.blog.app.core.storage.AuthStorage
-import com.blog.app.data.repository.AuthRepository
 import com.blog.app.navigation.AppNavigation
 
 /**
  * 应用主 Activity。
  */
 class MainActivity : ComponentActivity() {
-    private val authRepository = AuthRepository()
-
-    private val authLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.data != null) {
-            handleAuthIntent(result.data)
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AuthStorage.initialize(applicationContext)
@@ -36,7 +23,10 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavigation(
                         onLogin = {
-                            authLauncher.launch(authRepository.authorizationIntent(this))
+                            startActivityForResult(
+                                Intent(this, LoginActivity::class.java),
+                                LOGIN_REQUEST_CODE
+                            )
                         }
                     )
                 }
@@ -45,23 +35,17 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * 处理授权服务器返回的 OAuth2 回调。
+     * 接收登录页面结果并刷新当前页面。
      */
-    private fun handleAuthIntent(intent: Intent?) {
-        if (intent == null) {
-            return
+    @Deprecated("使用 Activity Result API 时无需手动处理登录页面结果")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == LOGIN_REQUEST_CODE && resultCode == RESULT_OK) {
+            recreate()
         }
+    }
 
-        authRepository.handleAuthorizationResponse(this, intent) { result ->
-            runOnUiThread {
-                result.onFailure { error ->
-                    Toast.makeText(
-                        this,
-                        error.message ?: "登录失败",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-        }
+    companion object {
+        private const val LOGIN_REQUEST_CODE = 1001
     }
 }
