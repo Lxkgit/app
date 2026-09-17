@@ -30,7 +30,7 @@ import com.blog.app.ui.home.HomeScreen
 import com.blog.app.ui.user.UserScreen
 
 /**
- * Application navigation entry point.
+ * 应用主导航入口。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
