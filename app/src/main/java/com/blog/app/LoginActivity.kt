@@ -36,6 +36,7 @@ class LoginActivity : ComponentActivity() {
     private lateinit var errorView: TextView
     private lateinit var debugView: TextView
     private lateinit var authorizationRequest: AuthorizationRequest
+    private var callbackHandled = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,7 +51,6 @@ class LoginActivity : ComponentActivity() {
 
         appendDebug("授权请求已创建")
         appendDebug("client_id=${ApiConfig.OAUTH_CLIENT_ID}")
-        appendDebug("authorization_uri=${authorizationRequest.toUri().getQueryParameter("redirect_uri")}")
         appendDebug("redirect_uri=${ApiConfig.OAUTH_REDIRECT_URI}")
         appendDebug("state=${authorizationRequest.state?.take(8)}...")
         appendDebug("开始加载授权页面")
@@ -180,6 +180,11 @@ class LoginActivity : ComponentActivity() {
             && uri.host.equals(redirectUri.host, true)
             && uri.path == redirectUri.path
         ) {
+            if (callbackHandled) {
+                appendDebug("OAuth2 回调已处理，忽略重复回调")
+                return true
+            }
+            callbackHandled = true
             appendDebug("检测到 OAuth2 回调")
             appendDebug("callback scheme=${uri.scheme}, host=${uri.host}, path=${uri.path}")
             appendDebug("callback code=${if (uri.getQueryParameter("code").isNullOrBlank()) "缺失" else "已返回"}")
