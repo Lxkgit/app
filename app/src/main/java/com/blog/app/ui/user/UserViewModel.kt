@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * UI state for the personal page authentication flow.
+ * 个人页面的认证界面状态。
  */
 data class UserUiState(
     val loggedIn: Boolean = AuthStorage.isLoggedIn(),
@@ -18,7 +18,7 @@ data class UserUiState(
 )
 
 /**
- * Coordinates OAuth2 login and logout for the personal page.
+ * 协调个人页面的 OAuth2 登录和退出流程。
  */
 class UserViewModel(
     private val repository: AuthRepository = AuthRepository()
@@ -27,7 +27,7 @@ class UserViewModel(
     val uiState: StateFlow<UserUiState> = _uiState.asStateFlow()
 
     /**
-     * Refreshes the displayed login state from persistent storage.
+     * 从本地持久化存储刷新当前登录状态。
      */
     fun refresh() {
         _uiState.value = UserUiState(
@@ -39,14 +39,14 @@ class UserViewModel(
     }
 
     /**
-     * Marks the authorization flow as loading.
+     * 将授权流程标记为加载中。
      */
     fun beginLogin() {
         _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
     }
 
     /**
-     * Displays an authorization error.
+     * 保存授权失败信息供界面显示。
      */
     fun loginFailed(message: String) {
         _uiState.value = _uiState.value.copy(
@@ -56,7 +56,7 @@ class UserViewModel(
     }
 
     /**
-     * Clears the current login state.
+     * 清除当前登录状态。
      */
     fun logout() {
         repository.logout()
