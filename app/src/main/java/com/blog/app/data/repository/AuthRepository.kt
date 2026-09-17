@@ -3,6 +3,7 @@ package com.blog.app.data.repository
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Base64
 import com.blog.app.core.config.ApiConfig
 import com.blog.app.core.storage.AuthStorage
 import net.openid.appauth.AuthorizationException
@@ -13,6 +14,7 @@ import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.AuthState
 import net.openid.appauth.ResponseTypeValues
 import net.openid.appauth.TokenResponse
+import org.json.JSONObject
 
 /**
  * Handles OAuth2 authorization code and PKCE authentication with the blog service.
@@ -96,10 +98,9 @@ class AuthRepository {
     private fun readUsername(tokenResponse: TokenResponse): String? {
         val idToken = tokenResponse.idToken ?: return null
         return runCatching {
-            net.openid.appauth.IdToken
-                .from(idToken)
-                .additionalClaims["username"]
-                ?.toString()
+            val payload = idToken.split(".")[1]
+            val json = String(Base64.decode(payload, Base64.URL_SAFE or Base64.NO_WRAP))
+            JSONObject(json).optString("username").takeIf { it.isNotBlank() }
         }.getOrNull()
     }
 }
