@@ -24,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,12 +47,19 @@ fun UserScreen(
     onLogin: () -> Unit,
     onSettings: () -> Unit,
     onFileManager: () -> Unit,
+    refreshKey: Int = 0,
     viewModel: UserViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refresh()
+    }
+
+    LaunchedEffect(refreshKey) {
+        if (refreshKey > 0) {
+            viewModel.refresh()
+        }
     }
 
     Scaffold(
@@ -68,17 +76,13 @@ fun UserScreen(
     ) { padding ->
         if (state.loggedIn) {
             UserInfoView(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+                modifier = Modifier.fillMaxSize().padding(padding),
                 state = state,
                 onFileManager = onFileManager
             )
         } else {
             LoginView(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+                modifier = Modifier.fillMaxSize().padding(padding),
                 isLoading = state.isLoading,
                 errorMessage = state.errorMessage,
                 onLogin = {
@@ -133,13 +137,9 @@ private fun UserInfoView(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
-            UserHeader(state)
-        }
+        item { UserHeader(state) }
         if (!state.errorMessage.isNullOrBlank()) {
-            item {
-                Text(state.errorMessage, color = MaterialTheme.colorScheme.error)
-            }
+            item { Text(state.errorMessage, color = MaterialTheme.colorScheme.error) }
         }
         if (state.isLoading) {
             item {
