@@ -3,7 +3,7 @@ package com.blog.app.core.storage
 import android.content.Context
 
 /**
- * Stores the OAuth2 login state locally on the device.
+ * 在设备本地保存 OAuth2 登录状态。
  */
 object AuthStorage {
     private const val PREFS_NAME = "blog_auth"
@@ -16,44 +16,44 @@ object AuthStorage {
     private var preferences: android.content.SharedPreferences? = null
 
     /**
-     * Initializes the persistent storage.
+     * 初始化本地持久化存储。
      */
     fun initialize(context: Context) {
         preferences = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
     /**
-     * Returns the current access token.
+     * 获取当前访问令牌。
      */
     fun accessToken(): String? = preferences?.getString(ACCESS_TOKEN, null)
 
     /**
-     * Returns the stored refresh token.
+     * 获取保存的刷新令牌。
      */
     fun refreshToken(): String? = preferences?.getString(REFRESH_TOKEN, null)
 
     /**
-     * Returns whether a token is currently stored and not expired.
+     * 判断当前是否存在未过期的访问令牌。
      */
     fun isLoggedIn(): Boolean = !accessToken().isNullOrBlank() && expiresAt() > System.currentTimeMillis()
 
     /**
-     * Returns the stored login name.
+     * 获取保存的登录用户名。
      */
     fun username(): String = preferences?.getString(USERNAME, "").orEmpty()
 
     /**
-     * Returns the access token expiration timestamp in milliseconds.
+     * 获取访问令牌的过期时间戳，单位为毫秒。
      */
     fun expiresAt(): Long = preferences?.getLong(EXPIRES_AT, 0L) ?: 0L
 
     /**
-     * Returns the persisted AppAuth state.
+     * 获取保存的 AppAuth 授权状态。
      */
     fun authState(): String? = preferences?.getString(AUTH_STATE, null)
 
     /**
-     * Saves a successful OAuth2 login.
+     * 保存成功的 OAuth2 登录状态。
      */
     fun saveLogin(
         username: String,
@@ -72,7 +72,7 @@ object AuthStorage {
     }
 
     /**
-     * Clears the local login state.
+     * 清除本地登录状态。
      */
     fun clear() {
         preferences?.edit()?.clear()?.apply()
