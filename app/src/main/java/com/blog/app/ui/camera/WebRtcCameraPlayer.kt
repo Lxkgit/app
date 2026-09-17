@@ -84,10 +84,9 @@ class WebRtcCameraPlayer(
                 override fun onDataChannel(dataChannel: org.webrtc.DataChannel) = Unit
                 override fun onRenegotiationNeeded() = Unit
                 override fun onTrack(transceiver: RtpTransceiver) {
-                    (transceiver.receiver.track as? VideoTrack)?.let { attachVideoTrack(it) }
+                    (transceiver.receiver.track() as? VideoTrack)?.let { attachVideoTrack(it) }
                 }
                 override fun onStandardizedIceConnectionChange(newState: PeerConnection.IceConnectionState) = Unit
-                override fun onSelectedCandidatePairChanged(event: PeerConnection.CandidatePairChangeEvent) = Unit
             }
         ) ?: throw IllegalStateException("创建 WebRTC 连接失败")
 
