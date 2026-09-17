@@ -7,7 +7,9 @@ import com.blog.app.data.model.file.FileItem
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 
 /**
  * 文件云盘数据仓库。
@@ -32,11 +34,11 @@ class FileRepository(
      */
     suspend fun createDirectory(path: String?, name: String, type: Int = 0) {
         api.createDirectory(
-            mapOf(
-                "dirPath" to path.orEmpty(),
-                "dirName" to name,
-                "dirType" to type
-            )
+            buildJsonObject {
+                put("dirPath", path.orEmpty())
+                put("dirName", name)
+                put("dirType", type)
+            }
         )
     }
 
