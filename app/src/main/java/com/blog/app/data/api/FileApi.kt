@@ -1,6 +1,7 @@
 package com.blog.app.data.api
 
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -32,7 +33,7 @@ interface FileApi {
      */
     @POST("dir/save")
     suspend fun createDirectory(
-        @Body body: Map<String, @JvmSuppressWildcards Any?>
+        @Body body: JsonObject
     ): JsonElement
 
     /**
