@@ -1,10 +1,14 @@
 package com.blog.app.ui.file
 
+import android.net.Uri
+import android.widget.MediaController
+import android.widget.VideoView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,17 +32,24 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 import com.blog.app.data.model.file.FileDirectory
 import com.blog.app.data.model.file.FileItem
 
@@ -54,6 +65,7 @@ fun FileManagerScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val errorMessage = state.errorMessage
     var showCreateDialog by remember { mutableStateOf(false) }
+    var previewFile by remember { mutableStateOf<FileItem?>(null) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.load()
@@ -64,7 +76,11 @@ fun FileManagerScreen(
             TopAppBar(
                 title = { Text(if (state.path.isNullOrBlank()) "文件云盘" else state.path ?: "文件云盘") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        if (!viewModel.goBack()) {
+                            onBack()
+                        }
+                    }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "返回")
                     }
                 },
@@ -106,7 +122,15 @@ fun FileManagerScreen(
                     )
                 }
                 items(state.files, key = { "file-${it.id}" }) { file ->
-                    FileRow(file = file, onDelete = { viewModel.deleteFile(file) })
+                    FileRow(
+                        file = file,
+                        onPreview = if (isPreviewable(file)) {
+                            { previewFile = file }
+                        } else {
+                            null
+                        },
+                        onDelete = { viewModel.deleteFile(file) }
+                    )
                 }
             }
         }
@@ -118,6 +142,13 @@ fun FileManagerScreen(
             onConfirm = { name ->
                 viewModel.createDirectory(name) { showCreateDialog = false }
             }
+        )
+    }
+
+    previewFile?.let { file ->
+        FilePreviewDialog(
+            file = file,
+            onDismiss = { previewFile = null }
         )
     }
 }
@@ -149,8 +180,15 @@ private fun DirectoryRow(
  * 文件列表项。
  */
 @Composable
-private fun FileRow(file: FileItem, onDelete: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun FileRow(
+    file: FileItem,
+    onPreview: (() -> Unit)?,
+    onDelete: () -> Unit
+) {
+    Card(
+        onClick = { onPreview?.invoke() },
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -161,10 +199,95 @@ private fun FileRow(file: FileItem, onDelete: () -> Unit) {
                 if (file.type.isNotBlank()) {
                     Text(file.type, style = MaterialTheme.typography.bodySmall)
                 }
+                if (onPreview != null) {
+                    Text("点击查看", style = MaterialTheme.typography.labelSmall)
+                }
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "删除文件")
             }
+        }
+    }
+}
+
+/**
+ * 判断文件是否支持预览。
+ */
+private fun isPreviewable(file: FileItem): Boolean {
+    val type = file.type.lowercase()
+    val name = file.name.lowercase()
+    return type.startsWith("image/") || type.startsWith("video/") ||
+        name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") ||
+        name.endsWith(".gif") || name.endsWith(".webp") || name.endsWith(".bmp") ||
+        name.endsWith(".mp4") || name.endsWith(".webm") || name.endsWith(".3gp") ||
+        name.endsWith(".mkv")
+}
+
+/**
+ * 文件预览对话框。
+ */
+@Composable
+private fun FilePreviewDialog(
+    file: FileItem,
+    onDismiss: () -> Unit
+) {
+    val isVideo = file.type.lowercase().startsWith("video/") ||
+        file.name.lowercase().let {
+            it.endsWith(".mp4") || it.endsWith(".webm") || it.endsWith(".3gp") || it.endsWith(".mkv")
+        }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(20.dp)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(file.name, style = MaterialTheme.typography.titleMedium)
+                if (isVideo) {
+                    VideoPreview(file.url)
+                } else {
+                    AsyncImage(
+                        model = file.url,
+                        contentDescription = file.name,
+                        modifier = Modifier.fillMaxWidth().heightIn(max = 560.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                ) {
+                    Text("关闭")
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 视频预览播放器。
+ */
+@Composable
+private fun VideoPreview(url: String) {
+    val context = LocalContext.current
+    val videoView = remember(url) {
+        VideoView(context).apply {
+            setMediaController(MediaController(context))
+            setVideoURI(Uri.parse(url))
+            start()
+        }
+    }
+
+    AndroidView(
+        factory = { videoView },
+        modifier = Modifier.fillMaxWidth().heightIn(min = 220.dp, max = 560.dp)
+    )
+
+    DisposableEffect(videoView) {
+        onDispose {
+            videoView.stopPlayback()
         }
     }
 }
