@@ -20,10 +20,12 @@ class OAuthUrlPolicyTest {
     }
 
     @Test
-    fun authorizationRequestContainsState() {
+    fun authorizationRequestContainsStateAndNonce() {
         val request = AuthRepository().createAuthorizationRequest()
 
         assertNotNull(request.state)
         assertTrue(request.state!!.isNotBlank())
+        assertNotNull(request.nonce)
+        assertTrue(request.nonce!!.isNotBlank())
     }
 }
