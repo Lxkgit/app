@@ -1,5 +1,6 @@
 package com.blog.app.core.network
 
+import com.blog.app.core.auth.AuthSessionManager
 import com.blog.app.core.config.ApiConfig
 import com.blog.app.core.storage.AuthStorage
 import kotlinx.serialization.json.Json
@@ -21,13 +22,33 @@ object NetworkModule {
     }
 
     private val authInterceptor = Interceptor { chain ->
+        val request = chain.request()
         val token = AuthStorage.accessToken()
-        val request = chain.request().newBuilder().apply {
+        val authenticatedRequest = request.newBuilder().apply {
             if (!token.isNullOrBlank()) {
                 addHeader("Authorization", "Bearer $token")
             }
         }.build()
-        chain.proceed(request)
+
+        val response = chain.proceed(authenticatedRequest)
+        if (response.code != 401 || AuthSessionManager.isRetryRequest(request)) {
+            return@Interceptor response
+        }
+
+        response.close()
+
+        if (!AuthSessionManager.waitForReLogin()) {
+            return@Interceptor chain.proceed(authenticatedRequest)
+        }
+
+        val newToken = AuthStorage.accessToken()
+        val retryRequest = AuthSessionManager.markRetry(request).newBuilder().apply {
+            removeHeader("Authorization")
+            if (!newToken.isNullOrBlank()) {
+                addHeader("Authorization", "Bearer $newToken")
+            }
+        }.build()
+        chain.proceed(retryRequest)
     }
 
     private val okHttpClient = OkHttpClient.Builder()
