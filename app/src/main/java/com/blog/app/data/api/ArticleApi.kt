@@ -5,17 +5,17 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 /**
- * Blog article content service API.
+ * 博客文章内容服务接口。
  */
 interface ArticleApi {
     /**
-     * Loads the article category tree.
+     * 获取文章分类树。
      */
     @GET("article/type/tree")
     suspend fun getArticleTypes(): JsonElement
 
     /**
-     * Loads a paginated article list.
+     * 获取分页文章列表。
      */
     @GET("article/list")
     suspend fun getArticles(
