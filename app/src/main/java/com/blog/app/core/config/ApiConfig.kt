@@ -15,12 +15,22 @@ object ApiConfig {
     const val AUTH_BASE_URL = "http://124.221.195.130/auth/"
 
     /**
-     * OAuth2 client identifier registered for the blog application.
+     * Android public OAuth2 client identifier.
      */
-    const val OAUTH_CLIENT_ID = "blog"
+    const val OAUTH_CLIENT_ID = "blog-android"
 
     /**
-     * Client secret required by the existing password grant endpoint.
+     * OAuth2 callback URI registered for the Android application.
      */
-    const val OAUTH_CLIENT_SECRET = "123456"
+    const val OAUTH_REDIRECT_URI = "com.blog.app://oauth/callback"
+
+    /**
+     * OAuth2 authorization endpoint.
+     */
+    const val OAUTH_AUTHORIZATION_ENDPOINT = "${AUTH_BASE_URL}oauth2/authorize"
+
+    /**
+     * OAuth2 token endpoint.
+     */
+    const val OAUTH_TOKEN_ENDPOINT = "${AUTH_BASE_URL}oauth2/token"
 }
