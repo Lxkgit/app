@@ -15,6 +15,11 @@ object ApiConfig {
     const val FILE_BASE_URL = "http://124.221.195.130/api/file/"
 
     /**
+     * 摄像头 WebRTC/WHEP 播放地址。
+     */
+    const val CAMERA_WHEP_URL = "http://124.221.195.130/rtsp/cam1/whep"
+
+    /**
      * 对外提供给 Android 使用的 OAuth2/OIDC 授权服务基础地址。
      */
     const val AUTH_BASE_URL = "http://124.221.195.130/auth/"
