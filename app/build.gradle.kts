@@ -74,5 +74,7 @@ dependencies {
     implementation("io.noties.markwon:image-glide:4.6.2")
     implementation("com.github.bumptech.glide:glide:4.16.0")
 
+    testImplementation("junit:junit:4.13.2")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
