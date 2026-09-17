@@ -69,8 +69,11 @@ class AuthRepository {
             return
         }
 
-        val authorizationResponse = AuthorizationResponse.fromUri(callbackUri)
-        if (authorizationResponse == null || authorizationResponse.authorizationCode.isNullOrBlank()) {
+        val authorizationResponse = AuthorizationResponse.Builder(request)
+            .fromUri(callbackUri)
+            .build()
+
+        if (authorizationResponse.authorizationCode.isNullOrBlank()) {
             onResult(Result.failure(IllegalStateException("登录授权响应无效")))
             return
         }
