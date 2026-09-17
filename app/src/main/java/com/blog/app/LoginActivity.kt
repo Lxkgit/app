@@ -5,13 +5,16 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.webkit.ConsoleMessage
 import android.webkit.CookieManager
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -31,6 +34,7 @@ class LoginActivity : ComponentActivity() {
     private lateinit var webView: WebView
     private lateinit var progressBar: ProgressBar
     private lateinit var errorView: TextView
+    private lateinit var debugView: TextView
     private lateinit var authorizationRequest: AuthorizationRequest
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +48,12 @@ class LoginActivity : ComponentActivity() {
             ?.let { AuthorizationRequest.jsonDeserialize(it) }
             ?: authRepository.createAuthorizationRequest()
 
+        appendDebug("授权请求已创建")
+        appendDebug("client_id=${ApiConfig.OAUTH_CLIENT_ID}")
+        appendDebug("authorization_uri=${authorizationRequest.toUri().getQueryParameter("redirect_uri")}")
+        appendDebug("redirect_uri=${ApiConfig.OAUTH_REDIRECT_URI}")
+        appendDebug("state=${authorizationRequest.state?.take(8)}...")
+        appendDebug("开始加载授权页面")
         webView.loadUrl(authorizationRequest.toUri().toString())
     }
 
@@ -65,6 +75,12 @@ class LoginActivity : ComponentActivity() {
             settings.allowContentAccess = false
             CookieManager.getInstance().setAcceptCookie(true)
             webViewClient = createWebViewClient()
+            webChromeClient = object : WebChromeClient() {
+                override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
+                    appendDebug("JS ${consoleMessage.messageLevel()}: ${consoleMessage.message()}")
+                    return true
+                }
+            }
         }
 
         progressBar = ProgressBar(this).apply {
@@ -81,8 +97,22 @@ class LoginActivity : ComponentActivity() {
             setOnClickListener {
                 visibility = View.GONE
                 webView.visibility = View.VISIBLE
+                appendDebug("手动重试登录页面")
                 webView.reload()
             }
+        }
+
+        debugView = TextView(this).apply {
+            textSize = 12f
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.argb(235, 20, 20, 20))
+            setPadding(16, 12, 16, 12)
+            isVerticalScrollBarEnabled = true
+        }
+
+        val debugScroll = ScrollView(this).apply {
+            setBackgroundColor(Color.argb(235, 20, 20, 20))
+            addView(debugView, ScrollView.LayoutParams(-1, -2))
         }
 
         root.addView(webView, FrameLayout.LayoutParams(-1, -1))
@@ -90,6 +120,9 @@ class LoginActivity : ComponentActivity() {
             gravity = android.view.Gravity.CENTER
         })
         root.addView(errorView, FrameLayout.LayoutParams(-1, -1))
+        root.addView(debugScroll, FrameLayout.LayoutParams(-1, 300).apply {
+            gravity = android.view.Gravity.BOTTOM
+        })
         setContentView(root)
     }
 
@@ -101,20 +134,25 @@ class LoginActivity : ComponentActivity() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                 progressBar.visibility = View.VISIBLE
                 errorView.visibility = View.GONE
+                appendDebug("页面开始加载: ${url ?: "null"}")
+                url?.let { handleUrl(Uri.parse(it)) }
                 super.onPageStarted(view, url, favicon)
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 progressBar.visibility = View.GONE
+                appendDebug("页面加载完成: ${url ?: "null"}")
                 super.onPageFinished(view, url)
             }
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                appendDebug("拦截导航: ${request.url}")
                 return handleUrl(request.url)
             }
 
             @Suppress("DEPRECATION")
             override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
+                appendDebug("拦截导航: $url")
                 return handleUrl(Uri.parse(url))
             }
 
@@ -126,6 +164,7 @@ class LoginActivity : ComponentActivity() {
                 if (request.isForMainFrame) {
                     progressBar.visibility = View.GONE
                     errorView.visibility = View.VISIBLE
+                    appendDebug("页面错误: code=${error.errorCode}, description=${error.description}, url=${request.url}")
                 }
                 super.onReceivedError(view, request, error)
             }
@@ -141,15 +180,22 @@ class LoginActivity : ComponentActivity() {
             && uri.host.equals(redirectUri.host, true)
             && uri.path == redirectUri.path
         ) {
+            appendDebug("检测到 OAuth2 回调")
+            appendDebug("callback scheme=${uri.scheme}, host=${uri.host}, path=${uri.path}")
+            appendDebug("callback code=${if (uri.getQueryParameter("code").isNullOrBlank()) "缺失" else "已返回"}")
+            appendDebug("callback state=${if (uri.getQueryParameter("state").isNullOrBlank()) "缺失" else "已返回"}")
+            appendDebug("callback error=${uri.getQueryParameter("error") ?: "无"}")
             progressBar.visibility = View.VISIBLE
             webView.visibility = View.INVISIBLE
             authRepository.exchangeAuthorizationCode(this, authorizationRequest, uri) { result ->
                 runOnUiThread {
                     progressBar.visibility = View.GONE
                     result.onSuccess {
+                        appendDebug("OAuth2 token 交换成功，登录完成")
                         setResult(RESULT_OK)
                         finish()
                     }.onFailure { error ->
+                        appendDebug("OAuth2 token 交换失败: ${error.javaClass.simpleName}: ${error.message}")
                         webView.visibility = View.VISIBLE
                         Toast.makeText(
                             this,
@@ -163,10 +209,28 @@ class LoginActivity : ComponentActivity() {
         }
 
         if (!authUrlPolicy.isAllowed(uri.toString())) {
+            appendDebug("阻止非授权服务地址: $uri")
             return true
         }
 
         return false
+    }
+
+    /**
+     * 向页面底部调试窗口追加诊断信息。
+     */
+    private fun appendDebug(message: String) {
+        if (!::debugView.isInitialized) {
+            return
+        }
+        runOnUiThread {
+            val current = debugView.text?.toString().orEmpty()
+            val lines = (current + "\n" + message).lines().takeLast(80)
+            debugView.text = lines.joinToString("\n")
+            debugView.post {
+                (debugView.parent as? ScrollView)?.fullScroll(View.FOCUS_DOWN)
+            }
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
