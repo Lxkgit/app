@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * OAuth2 token response returned by the blog authorization service.
+ * 博客授权服务返回的 OAuth2 令牌结果。
  */
 @Serializable
 data class TokenResponse(
