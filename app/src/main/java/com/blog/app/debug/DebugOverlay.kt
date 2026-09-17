@@ -8,7 +8,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -22,6 +21,9 @@ object DebugOverlay {
     private const val BUTTON_SIZE_DP = 52
     private const val PANEL_HEIGHT_DP = 360
     private const val MARGIN_DP = 12
+    private const val TAG = "BLOG_DEBUG_OVERLAY"
+    private const val TAG_REFRESH = 1001
+    private const val TAG_LISTENER = 1002
 
     /**
      * 在当前 Activity 上挂载开发者调试悬浮窗。
@@ -99,8 +101,23 @@ object DebugOverlay {
             }
         }
 
-        val refresh = panel.getTag(TAG_REFRESH) as () -> Unit
-        refresh()
+        (panel.getTag(TAG_REFRESH) as () -> Unit).invoke()
+    }
+
+    /**
+     * 从 Activity 中移除开发者调试悬浮窗并解除日志监听。
+     */
+    fun detach(parent: ViewGroup) {
+        if (!com.blog.app.BuildConfig.DEBUG) {
+            return
+        }
+        val overlay = parent.findViewWithTag<View>(TAG) ?: return
+        val panel = overlay.findViewWithTag<View>(TAG_REFRESH)
+        val listener = panel?.getTag(TAG_LISTENER) as? (() -> Unit)
+        if (listener != null) {
+            DebugLog.removeListener(listener)
+        }
+        (overlay.parent as? ViewGroup)?.removeView(overlay)
     }
 
     private fun createPanel(activity: Activity): View {
@@ -147,10 +164,10 @@ object DebugOverlay {
             scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
         }
         container.setTag(TAG_REFRESH, refresh)
-        clear.setOnClickListener { DebugLog.clear() }
         val listener: () -> Unit = refresh
         container.setTag(TAG_LISTENER, listener)
         DebugLog.addListener(listener)
+        clear.setOnClickListener { DebugLog.clear() }
         return container
     }
 
@@ -164,8 +181,4 @@ object DebugOverlay {
     private fun dp(activity: Activity, value: Int): Int {
         return (value * activity.resources.displayMetrics.density).toInt()
     }
-
-    private const val TAG = "BLOG_DEBUG_OVERLAY"
-    private const val TAG_REFRESH = 1001
-    private const val TAG_LISTENER = 1002
 }
