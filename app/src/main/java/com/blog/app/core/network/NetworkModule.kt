@@ -11,7 +11,7 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.util.concurrent.TimeUnit
 
 /**
- * Provides the application's HTTP clients and Retrofit instances.
+ * 提供应用使用的 HTTP 客户端和 Retrofit 实例。
  */
 object NetworkModule {
     private val json = Json {
