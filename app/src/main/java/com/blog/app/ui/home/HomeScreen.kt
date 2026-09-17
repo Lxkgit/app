@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 
 /**
- * Blog application home screen.
+ * 博客应用首页。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +58,7 @@ fun HomeScreen(
 }
 
 /**
- * Displays the paginated home article feed.
+ * 显示分页首页文章列表。
  */
 @Composable
 private fun ArticleList(
@@ -87,7 +87,7 @@ private fun ArticleList(
 }
 
 /**
- * Displays the loading state.
+ * 显示加载状态。
  */
 @Composable
 private fun LoadingView(modifier: Modifier) {
@@ -97,7 +97,7 @@ private fun LoadingView(modifier: Modifier) {
 }
 
 /**
- * Displays the empty state.
+ * 显示空数据状态。
  */
 @Composable
 private fun EmptyView(modifier: Modifier) {
@@ -107,7 +107,7 @@ private fun EmptyView(modifier: Modifier) {
 }
 
 /**
- * Displays an article loading error.
+ * 显示文章加载错误。
  */
 @Composable
 private fun ErrorView(modifier: Modifier, message: String?, onRetry: () -> Unit) {
