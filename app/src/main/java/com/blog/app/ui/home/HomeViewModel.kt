@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * UI state for the blog home screen.
+ * 博客首页的界面状态。
  */
 data class HomeUiState(
     val articles: List<Article> = emptyList(),
@@ -22,7 +22,7 @@ data class HomeUiState(
 )
 
 /**
- * Loads and manages the home article feed.
+ * 加载并管理首页文章列表。
  */
 class HomeViewModel(
     private val repository: ArticleRepository = ArticleRepository()
@@ -37,7 +37,7 @@ class HomeViewModel(
     }
 
     /**
-     * Loads the first page from the normal home article endpoint.
+     * 从普通首页文章接口加载第一页数据。
      */
     fun loadFirstPage() {
         viewModelScope.launch {
@@ -69,7 +69,7 @@ class HomeViewModel(
     }
 
     /**
-     * Loads and appends the next server page.
+     * 加载并追加服务器返回的下一页数据。
      */
     fun loadNextPage() {
         val state = _uiState.value
@@ -98,7 +98,7 @@ class HomeViewModel(
     }
 
     /**
-     * Retries the first page request.
+     * 重新请求第一页数据。
      */
     fun retry() {
         loadFirstPage()
