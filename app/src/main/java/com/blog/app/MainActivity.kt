@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.blog.app.core.auth.AuthSessionManager
 import com.blog.app.core.storage.AuthStorage
 import com.blog.app.navigation.AppNavigation
 
@@ -19,7 +20,9 @@ class MainActivity : ComponentActivity() {
     private val loginLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == RESULT_OK) {
+        val success = result.resultCode == RESULT_OK
+        AuthSessionManager.onLoginResult(success)
+        if (success) {
             recreate()
         }
     }
@@ -27,6 +30,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AuthStorage.initialize(applicationContext)
+        AuthSessionManager.registerLoginLauncher {
+            loginLauncher.launch(Intent(this, LoginActivity::class.java))
+        }
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -38,5 +44,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        AuthSessionManager.unregisterLoginLauncher()
+        super.onDestroy()
     }
 }
