@@ -1,7 +1,7 @@
 package com.blog.app.data.model.article
 
 /**
- * Article model returned by the blog content service.
+ * 博客内容服务返回的文章模型。
  */
 data class Article(
     val id: Long,
@@ -22,26 +22,26 @@ data class Article(
     val articleLabels: List<ArticleLabel>
 ) {
     /**
-     * Markdown content exposed for UI compatibility.
+     * 提供给界面使用的 Markdown 正文。
      */
     val content: String
         get() = contentMd
 
     /**
-     * Category names combined for legacy UI display.
+     * 将文章分类名称组合为旧界面使用的显示文本。
      */
     val typeName: String
         get() = articleTypes.joinToString(" · ") { it.typeName }
 
     /**
-     * The current article API does not include an author name in userVo for the list data.
+     * 当前文章接口的列表数据没有提供作者名称。
      */
     val authorName: String
         get() = ""
 }
 
 /**
- * Article category information embedded in an article response.
+ * 文章响应中包含的分类信息。
  */
 data class ArticleTypeSummary(
     val id: Long,
@@ -50,7 +50,7 @@ data class ArticleTypeSummary(
 )
 
 /**
- * Article label information embedded in an article response.
+ * 文章响应中包含的标签信息。
  */
 data class ArticleLabel(
     val id: Long,
