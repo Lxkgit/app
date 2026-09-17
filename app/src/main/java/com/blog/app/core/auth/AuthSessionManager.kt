@@ -3,6 +3,8 @@ package com.blog.app.core.auth
 import android.os.Handler
 import android.os.Looper
 import com.blog.app.core.storage.AuthStorage
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
  * 管理登录状态失效后的自动重新登录流程。
@@ -10,7 +12,8 @@ import com.blog.app.core.storage.AuthStorage
 object AuthSessionManager {
     private const val AUTH_RETRY_HEADER = "X-Blog-Auth-Retry"
 
-    private val lock = Any()
+    private val lock = ReentrantLock()
+    private val loginCondition = lock.newCondition()
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private var loginLauncher: (() -> Unit)? = null
@@ -21,7 +24,7 @@ object AuthSessionManager {
      * 注册登录页面启动回调。
      */
     fun registerLoginLauncher(launcher: () -> Unit) {
-        synchronized(lock) {
+        lock.withLock {
             loginLauncher = launcher
         }
     }
@@ -30,7 +33,7 @@ object AuthSessionManager {
      * 解除登录页面启动回调。
      */
     fun unregisterLoginLauncher() {
-        synchronized(lock) {
+        lock.withLock {
             loginLauncher = null
         }
     }
@@ -39,13 +42,13 @@ object AuthSessionManager {
      * 通知登录页面已经完成登录或取消登录。
      */
     fun onLoginResult(success: Boolean) {
-        synchronized(lock) {
+        lock.withLock {
             if (!waitingForLogin) {
                 return
             }
             loginResult = success
             waitingForLogin = false
-            lock.notifyAll()
+            loginCondition.signalAll()
         }
     }
 
@@ -57,35 +60,37 @@ object AuthSessionManager {
     fun waitForReLogin(): Boolean {
         AuthStorage.clear()
 
-        val shouldLaunchLogin: Boolean
-        val launcher: (() -> Unit)?
-        synchronized(lock) {
-            shouldLaunchLogin = !waitingForLogin
-            if (shouldLaunchLogin) {
+        var shouldLaunchLogin = false
+        var launcher: (() -> Unit)? = null
+
+        lock.withLock {
+            if (!waitingForLogin) {
                 waitingForLogin = true
                 loginResult = null
+                shouldLaunchLogin = true
+                launcher = loginLauncher
             }
-            launcher = loginLauncher
         }
 
         if (shouldLaunchLogin) {
-            if (launcher == null) {
-                synchronized(lock) {
+            val loginLauncher = launcher
+            if (loginLauncher == null) {
+                lock.withLock {
                     waitingForLogin = false
                     loginResult = false
-                    lock.notifyAll()
+                    loginCondition.signalAll()
                 }
                 return false
             }
             mainHandler.post {
-                launcher.invoke()
+                loginLauncher.invoke()
             }
         }
 
-        synchronized(lock) {
+        lock.withLock {
             while (waitingForLogin) {
                 try {
-                    lock.wait()
+                    loginCondition.await()
                 } catch (_: InterruptedException) {
                     Thread.currentThread().interrupt()
                     return false
