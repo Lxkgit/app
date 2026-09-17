@@ -27,6 +27,7 @@ import com.blog.app.data.model.article.Article
 import com.blog.app.data.repository.AuthRepository
 import com.blog.app.ui.article.ArticleDetailScreen
 import com.blog.app.ui.article.ArticleListScreen
+import com.blog.app.ui.camera.CameraScreen
 import com.blog.app.ui.file.FileManagerScreen
 import com.blog.app.ui.home.HomeScreen
 import com.blog.app.ui.settings.SettingsScreen
@@ -44,6 +45,7 @@ fun AppNavigation(
     var selectedArticle by remember { mutableStateOf<Article?>(null) }
     var showSettings by remember { mutableStateOf(false) }
     var showFileManager by remember { mutableStateOf(false) }
+    var showCamera by remember { mutableStateOf(false) }
     var userRefreshKey by remember { mutableIntStateOf(0) }
 
     if (selectedArticle != null) {
@@ -72,6 +74,11 @@ fun AppNavigation(
     if (showFileManager) {
         BackHandler { showFileManager = false }
         FileManagerScreen(onBack = { showFileManager = false })
+        return
+    }
+
+    if (showCamera) {
+        CameraScreen(onBack = { showCamera = false })
         return
     }
 
@@ -122,6 +129,7 @@ fun AppNavigation(
                     onLogin = onLogin,
                     onSettings = { showSettings = true },
                     onFileManager = { showFileManager = true },
+                    onCamera = { showCamera = true },
                     refreshKey = userRefreshKey
                 )
             }
