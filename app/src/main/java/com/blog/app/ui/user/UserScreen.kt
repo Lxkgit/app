@@ -174,18 +174,21 @@ private fun UserInfoView(
             )
         }
         item {
-            PermissionCard(
-                menu = UserMenu(
-                    id = -1L,
-                    menuName = "摄像头监控",
-                    menuIcon = "",
-                    auth = "",
-                    menuType = 1,
-                    children = emptyList()
-                ),
-                onClick = onCamera
-            )
+            CameraPermissionCard(onClick = onCamera)
         }
+    }
+}
+
+/**
+ * 摄像头监控入口。
+ */
+@Composable
+private fun CameraPermissionCard(onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text("摄像头监控")
     }
 }
 
