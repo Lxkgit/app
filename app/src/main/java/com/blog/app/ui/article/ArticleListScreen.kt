@@ -42,7 +42,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 
 /**
- * Article browsing screen with a collapsible three-level category tree.
+ * 文章浏览页面，支持可折叠的三级分类树。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,7 +90,7 @@ fun ArticleListScreen(
 }
 
 /**
- * Displays the category tree with independent expansion state for each node.
+ * 显示分类树，每个节点独立维护展开状态。
  */
 @Composable
 private fun CategoryTree(
@@ -114,7 +114,7 @@ private fun CategoryTree(
 }
 
 /**
- * Renders one category node and its descendants recursively.
+ * 递归显示一个分类节点及其子节点。
  */
 @Composable
 private fun CategoryNode(
@@ -142,7 +142,7 @@ private fun CategoryNode(
 }
 
 /**
- * Displays the paginated article list.
+ * 显示分页文章列表。
  */
 @Composable
 private fun ArticleList(
@@ -171,7 +171,7 @@ private fun ArticleList(
 }
 
 /**
- * Displays the loading state.
+ * 显示加载状态。
  */
 @Composable
 private fun LoadingView() {
@@ -181,7 +181,7 @@ private fun LoadingView() {
 }
 
 /**
- * Displays the empty state.
+ * 显示空数据状态。
  */
 @Composable
 private fun EmptyView() {
@@ -191,7 +191,7 @@ private fun EmptyView() {
 }
 
 /**
- * Displays a loading error.
+ * 显示文章加载错误。
  */
 @Composable
 private fun ErrorView(message: String?, onRetry: () -> Unit) {
