@@ -20,7 +20,7 @@ import coil.compose.AsyncImage
 import com.blog.app.data.model.article.Article
 
 /**
- * Shared article card used by the home and article pages.
+ * 首页和文章列表共用的文章卡片。
  */
 @Composable
 fun ArticleCard(
@@ -67,7 +67,7 @@ fun ArticleCard(
 }
 
 /**
- * Resolves a relative image path returned by the content service.
+ * 将内容服务返回的相对图片路径转换为完整地址。
  */
 private fun resolveImageUrl(url: String): String =
     if (url.startsWith("http://") || url.startsWith("https://")) url
