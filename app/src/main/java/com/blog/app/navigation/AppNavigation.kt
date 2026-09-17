@@ -24,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.blog.app.R
 import com.blog.app.data.model.article.Article
+import com.blog.app.data.repository.AuthRepository
 import com.blog.app.ui.article.ArticleDetailScreen
 import com.blog.app.ui.article.ArticleListScreen
 import com.blog.app.ui.file.FileManagerScreen
@@ -78,6 +79,7 @@ fun AppNavigation(
         SettingsScreen(
             onBack = { showSettings = false },
             onLogout = {
+                AuthRepository().logout()
                 showSettings = false
                 selectedTab = 2
             }
