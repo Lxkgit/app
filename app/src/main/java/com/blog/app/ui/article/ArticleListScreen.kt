@@ -31,10 +31,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.blog.app.data.model.article.Article
 import com.blog.app.data.model.article.ArticleType
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -261,7 +263,7 @@ private fun ArticleList(
 }
 
 /**
- * Displays an article card.
+ * Displays an article card with its cover image when available.
  */
 @Composable
 private fun ArticleCard(article: Article, onArticleClick: (Article) -> Unit) {
@@ -271,28 +273,50 @@ private fun ArticleCard(article: Article, onArticleClick: (Article) -> Unit) {
             .clickable { onArticleClick(article) },
         shape = RoundedCornerShape(16.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = article.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            if (article.contentMemo.isNotBlank()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(article.contentMemo, maxLines = 3)
+        Column {
+            article.contentImg?.takeIf { it.isNotBlank() }?.let { imageUrl ->
+                AsyncImage(
+                    model = resolveImageUrl(imageUrl),
+                    contentDescription = article.title,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                    contentScale = ContentScale.Crop
+                )
             }
-            if (article.articleTypes.isNotEmpty()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = article.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                if (article.contentMemo.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(article.contentMemo, maxLines = 3)
+                }
+                if (article.articleTypes.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(article.typeName, style = MaterialTheme.typography.labelMedium)
+                }
                 Spacer(modifier = Modifier.height(10.dp))
-                Text(article.typeName, style = MaterialTheme.typography.labelMedium)
+                Text(
+                    "${article.createTime}  ·  浏览 ${article.browseCount}  ·  点赞 ${article.likeCount}",
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                "${article.createTime}  ·  浏览 ${article.browseCount}  ·  点赞 ${article.likeCount}",
-                style = MaterialTheme.typography.labelSmall
-            )
         }
     }
 }
+
+/**
+ * Resolves a relative image path returned by the content service.
+ */
+private fun resolveImageUrl(url: String): String =
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+        url
+    } else {
+        "http://124.221.195.130$url"
+    }
 
 /**
  * Displays the loading state.

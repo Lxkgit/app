@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -15,51 +16,60 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
- * Personal page with the initial login entry UI.
+ * Personal page with the real blog authentication flow.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserScreen() {
-    var loggedIn by rememberSaveable { mutableStateOf(false) }
+fun UserScreen(
+    viewModel: UserViewModel = viewModel()
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("我的") })
         }
     ) { padding ->
-        if (loggedIn) {
+        if (state.loggedIn) {
             UserInfoView(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                onLogout = { loggedIn = false }
+                username = state.username,
+                onLogout = viewModel::logout
             )
         } else {
             LoginView(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                onLogin = { loggedIn = true }
+                isLoading = state.isLoading,
+                errorMessage = state.errorMessage,
+                onLogin = viewModel::login
             )
         }
     }
 }
 
 /**
- * Displays the login form reserved for the blog authentication service.
+ * Displays the blog login form.
  */
 @Composable
 private fun LoginView(
     modifier: Modifier,
-    onLogin: () -> Unit
+    isLoading: Boolean,
+    errorMessage: String?,
+    onLogin: (String, String) -> Unit
 ) {
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -73,7 +83,7 @@ private fun LoginView(
             style = MaterialTheme.typography.headlineMedium
         )
         Text(
-            text = "登录后可以继续使用个人中心功能。",
+            text = "使用博客账号登录，登录状态会保存在本机。",
             style = MaterialTheme.typography.bodyMedium
         )
         OutlinedTextField(
@@ -81,7 +91,8 @@ private fun LoginView(
             onValueChange = { username = it },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("账号") },
-            singleLine = true
+            singleLine = true,
+            enabled = !isLoading
         )
         OutlinedTextField(
             value = password,
@@ -89,24 +100,37 @@ private fun LoginView(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("密码") },
             singleLine = true,
+            enabled = !isLoading,
             visualTransformation = PasswordVisualTransformation()
         )
+        if (!errorMessage.isNullOrBlank()) {
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
         Button(
-            onClick = onLogin,
+            onClick = { onLogin(username, password) },
             modifier = Modifier.fillMaxWidth(),
-            enabled = username.isNotBlank() && password.isNotBlank()
+            enabled = !isLoading && username.isNotBlank() && password.isNotBlank()
         ) {
-            Text("登录")
+            if (isLoading) {
+                CircularProgressIndicator()
+            } else {
+                Text("登录")
+            }
         }
     }
 }
 
 /**
- * Displays the temporary logged-in user area.
+ * Displays the authenticated user area.
  */
 @Composable
 private fun UserInfoView(
     modifier: Modifier,
+    username: String,
     onLogout: () -> Unit
 ) {
     Column(
@@ -117,7 +141,12 @@ private fun UserInfoView(
             Column(modifier = Modifier.padding(20.dp)) {
                 Text("已登录", style = MaterialTheme.typography.titleLarge)
                 Text(
-                    "用户信息将在接入博客认证接口后显示。",
+                    username,
+                    modifier = Modifier.padding(top = 8.dp),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    "博客 OAuth2 登录已接入。",
                     modifier = Modifier.padding(top = 8.dp),
                     style = MaterialTheme.typography.bodyMedium
                 )
