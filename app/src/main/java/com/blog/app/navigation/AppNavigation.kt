@@ -1,15 +1,17 @@
 package com.blog.app.navigation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -17,6 +19,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.blog.app.R
 import com.blog.app.data.model.article.Article
 import com.blog.app.ui.article.ArticleDetailScreen
 import com.blog.app.ui.article.ArticleListScreen
@@ -33,25 +38,33 @@ fun AppNavigation() {
     var selectedArticle by remember { mutableStateOf<Article?>(null) }
 
     if (selectedArticle != null) {
+        val goBack = { selectedArticle = null }
+        BackHandler(onBack = goBack)
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
                 TopAppBar(
                     title = { Text("文章详情") },
                     navigationIcon = {
-                        TextButton(onClick = { selectedArticle = null }) {
-                            Text("↩")
-                        }
+                        Icon(
+                            painter = painterResource(R.drawable.icon_back),
+                            contentDescription = "返回",
+                            modifier = Modifier.padding(start = 12.dp).height(24.dp)
+                        )
                     }
                 )
             }
         ) { padding ->
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
+                modifier = Modifier.fillMaxSize().padding(padding)
             ) {
-                ArticleDetailScreen(selectedArticle!!)
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable(onClick = {})
+                ) {
+                    ArticleDetailScreen(selectedArticle!!)
+                }
             }
         }
         return
@@ -60,32 +73,30 @@ fun AppNavigation() {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar {
+            NavigationBar(modifier = Modifier.height(56.dp)) {
                 NavigationBarItem(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    icon = { Text("⌂") },
-                    label = { Text("首页") }
+                    icon = { Icon(painterResource(R.drawable.icon_home), "首页") },
+                    label = null
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    icon = { Text("▤") },
-                    label = { Text("文章") }
+                    icon = { Icon(painterResource(R.drawable.icon_article), "文章") },
+                    label = null
                 )
                 NavigationBarItem(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
-                    icon = { Text("●") },
-                    label = { Text("我的") }
+                    icon = { Icon(painterResource(R.drawable.icon_user), "我的") },
+                    label = null
                 )
             }
         }
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+            modifier = Modifier.fillMaxSize().padding(padding)
         ) {
             when (selectedTab) {
                 0 -> HomeScreen(onArticleClick = { selectedArticle = it })
