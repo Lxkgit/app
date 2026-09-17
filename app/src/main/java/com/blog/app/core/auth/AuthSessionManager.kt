@@ -68,7 +68,15 @@ object AuthSessionManager {
             launcher = loginLauncher
         }
 
-        if (shouldLaunchLogin && launcher != null) {
+        if (shouldLaunchLogin) {
+            if (launcher == null) {
+                synchronized(lock) {
+                    waitingForLogin = false
+                    loginResult = false
+                    lock.notifyAll()
+                }
+                return false
+            }
             mainHandler.post {
                 launcher.invoke()
             }
