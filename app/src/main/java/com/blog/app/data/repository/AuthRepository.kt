@@ -44,6 +44,7 @@ class AuthRepository {
     fun createAuthorizationRequest(): AuthorizationRequest {
         val codeVerifier = CodeVerifierUtil.generateRandomCodeVerifier()
         val state = UUID.randomUUID().toString()
+        val nonce = UUID.randomUUID().toString()
 
         return AuthorizationRequest.Builder(
             serviceConfiguration(),
@@ -53,6 +54,7 @@ class AuthRepository {
         )
             .setScope("openid")
             .setState(state)
+            .setNonce(nonce)
             .setCodeVerifier(codeVerifier)
             .build()
     }
