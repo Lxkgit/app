@@ -4,19 +4,25 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.blog.app.data.model.article.Article
 import com.blog.app.ui.article.ArticleDetailScreen
+import com.blog.app.ui.article.ArticleListScreen
 import com.blog.app.ui.home.HomeScreen
+import com.blog.app.ui.user.UserScreen
 
 /**
  * Application navigation entry point.
@@ -24,20 +30,18 @@ import com.blog.app.ui.home.HomeScreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation() {
+    var selectedTab by remember { mutableIntStateOf(0) }
     var selectedArticle by remember { mutableStateOf<Article?>(null) }
-    val article = selectedArticle
 
-    if (article == null) {
-        HomeScreen(onArticleClick = { selectedArticle = it })
-    } else {
+    if (selectedArticle != null) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
                 TopAppBar(
-                    title = { Text("文章") },
+                    title = { Text("文章详情") },
                     navigationIcon = {
                         TextButton(onClick = { selectedArticle = null }) {
-                            Text("返回")
+                            Text("←")
                         }
                     }
                 )
@@ -48,7 +52,46 @@ fun AppNavigation() {
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                ArticleDetailScreen(article)
+                ArticleDetailScreen(selectedArticle!!)
+            }
+        }
+        return
+    }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    icon = { Text("⌂") },
+                    label = { Text("首页") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    icon = { Text("▤") },
+                    label = { Text("文章") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
+                    icon = { Text("●") },
+                    label = { Text("我的") }
+                )
+            }
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            when (selectedTab) {
+                0 -> HomeScreen(onArticleClick = { selectedArticle = it })
+                1 -> ArticleListScreen(onArticleClick = { selectedArticle = it })
+                2 -> UserScreen()
             }
         }
     }
