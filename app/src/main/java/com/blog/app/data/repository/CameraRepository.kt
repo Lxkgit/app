@@ -3,7 +3,6 @@ package com.blog.app.data.repository
 import com.blog.app.core.network.NetworkModule
 import com.blog.app.data.api.CameraApi
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
