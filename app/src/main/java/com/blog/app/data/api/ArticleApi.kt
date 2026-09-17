@@ -24,6 +24,7 @@ interface ArticleApi {
         @Query("type") type: Long,
         @Query("selectUser") selectUser: Int,
         @Query("selectStatus") selectStatus: String,
-        @Query("sortType") sortType: String
+        @Query("sortType") sortType: String,
+        @Query("articleType") articleType: Long? = null
     ): JsonElement
 }
