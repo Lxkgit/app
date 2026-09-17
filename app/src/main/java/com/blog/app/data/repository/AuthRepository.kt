@@ -70,7 +70,7 @@ class AuthRepository {
                 val authState = AuthState(serviceConfiguration())
                 authState.update(response, tokenResponse, tokenException)
 
-                val username = readUsername(tokenResponse) ?: response.clientId
+                val username = readUsername(tokenResponse) ?: response.request.clientId
                 AuthStorage.saveLogin(
                     username = username,
                     accessToken = tokenResponse.accessToken,
