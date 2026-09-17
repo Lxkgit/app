@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,7 +18,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.blog.app.data.model.article.Article
-import com.blog.app.data.model.article.ArticleType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -52,7 +49,7 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Blog") })
+            TopAppBar(title = { Text("首页") })
         }
     ) { padding ->
         Column(
@@ -60,7 +57,6 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            CategoryBar(state.categories, state.selectedType, viewModel::selectType)
             when {
                 state.isLoading && state.articles.isEmpty() -> LoadingView()
                 state.errorMessage != null && state.articles.isEmpty() -> ErrorView(
@@ -74,37 +70,6 @@ fun HomeScreen(
                     onLoadMore = viewModel::loadNextPage
                 )
             }
-        }
-    }
-}
-
-/**
- * Displays the root categories returned by the category tree API.
- */
-@Composable
-private fun CategoryBar(
-    categories: List<ArticleType>,
-    selectedType: Long,
-    onSelect: (Long) -> Unit
-) {
-    LazyRow(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        item {
-            FilterChip(
-                selected = selectedType == 0L,
-                onClick = { onSelect(0L) },
-                label = { Text("全部") }
-            )
-        }
-        items(categories, key = { it.id }) { category ->
-            FilterChip(
-                selected = selectedType == category.id,
-                onClick = { onSelect(category.id) },
-                label = { Text(category.typeName) }
-            )
         }
     }
 }
@@ -135,13 +100,10 @@ private fun ArticleList(
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(
-            items = state.articles,
-            key = { it.id }
-        ) { article ->
+        items(state.articles, key = { it.id }) { article ->
             ArticleCard(article, onArticleClick)
         }
         if (state.isLoadingMore) {
@@ -170,7 +132,7 @@ private fun ArticleList(
 }
 
 /**
- * Displays an article card using the exact fields returned by the article API.
+ * Displays an article card using the fields returned by the article API.
  */
 @Composable
 private fun ArticleCard(article: Article, onArticleClick: (Article) -> Unit) {
