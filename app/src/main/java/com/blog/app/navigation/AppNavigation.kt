@@ -34,7 +34,9 @@ import com.blog.app.ui.user.UserScreen
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    onLogin: () -> Unit
+) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var selectedArticle by remember { mutableStateOf<Article?>(null) }
 
@@ -93,7 +95,7 @@ fun AppNavigation() {
             when (selectedTab) {
                 0 -> HomeScreen(onArticleClick = { selectedArticle = it })
                 1 -> ArticleListScreen(onArticleClick = { selectedArticle = it })
-                2 -> UserScreen()
+                2 -> UserScreen(onLogin = onLogin)
             }
         }
     }
