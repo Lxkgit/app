@@ -15,7 +15,7 @@ import com.blog.app.data.repository.AuthRepository
 import com.blog.app.navigation.AppNavigation
 
 /**
- * Main Android activity.
+ * 应用主 Activity。
  */
 class MainActivity : ComponentActivity() {
     private val authRepository = AuthRepository()
@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Handles the OAuth2 redirect returned by the authorization server.
+     * 处理授权服务器返回的 OAuth2 回调。
      */
     private fun handleAuthIntent(intent: Intent?) {
         if (intent == null) {
