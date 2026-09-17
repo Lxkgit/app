@@ -104,9 +104,11 @@ class AuthRepository {
             .setAuthorizationCode(code)
             .setRedirectUri(Uri.parse(ApiConfig.OAUTH_REDIRECT_URI))
             .setCodeVerifier(request.codeVerifier)
+            .setNonce(request.nonce)
             .build()
 
         Log.d(TAG, "开始请求 token endpoint: ${ApiConfig.OAUTH_TOKEN_ENDPOINT}")
+        Log.d(TAG, "ID Token nonce 校验值=${request.nonce?.take(8)}...")
         val authorizationService = authorizationService(context)
         authorizationService.performTokenRequest(tokenRequest) { tokenResponse, tokenException ->
             try {
