@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * UI state for the article browsing screen.
+ * 文章浏览页面的界面状态。
  */
 data class ArticleListUiState(
     val articles: List<Article> = emptyList(),
@@ -27,7 +27,7 @@ data class ArticleListUiState(
 )
 
 /**
- * Loads the article list and applies the selected category through articleType.
+ * 加载文章列表，并通过 articleType 应用当前分类筛选。
  */
 class ArticleListViewModel(
     private val repository: ArticleRepository = ArticleRepository()
@@ -43,7 +43,7 @@ class ArticleListViewModel(
     }
 
     /**
-     * Loads the complete three-level category tree.
+     * 加载完整的三级分类树。
      */
     private fun loadCategories() {
         viewModelScope.launch {
@@ -61,7 +61,7 @@ class ArticleListViewModel(
     }
 
     /**
-     * Loads the first article page using the selected category.
+     * 根据当前分类加载第一页文章。
      */
     fun loadFirstPage() {
         viewModelScope.launch {
@@ -94,7 +94,7 @@ class ArticleListViewModel(
     }
 
     /**
-     * Selects a leaf or category node and reloads the article list.
+     * 选择分类节点并重新加载文章列表。
      */
     fun selectCategory(category: ArticleType?) {
         val typeId = category?.id
@@ -109,7 +109,7 @@ class ArticleListViewModel(
     }
 
     /**
-     * Loads the next article page.
+     * 加载下一页文章。
      */
     fun loadNextPage() {
         val state = _uiState.value
@@ -137,7 +137,7 @@ class ArticleListViewModel(
     }
 
     /**
-     * Retries the current category request.
+     * 重新请求当前分类的数据。
      */
     fun retry() {
         loadFirstPage()
