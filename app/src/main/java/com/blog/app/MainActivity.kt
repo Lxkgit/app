@@ -2,6 +2,7 @@ package com.blog.app
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -10,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.blog.app.core.storage.AuthStorage
+import com.blog.app.debug.DebugOverlay
 import com.blog.app.navigation.AppNavigation
 
 /**
@@ -38,5 +40,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        DebugOverlay.attach(this, window.decorView as ViewGroup)
     }
 }
