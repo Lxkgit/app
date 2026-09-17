@@ -1,7 +1,7 @@
 package com.blog.app.data.model.article
 
 /**
- * Paginated result returned by the blog article service.
+ * 博客文章服务返回的分页结果。
  */
 data class ArticlePage(
     val page: Int,
@@ -10,7 +10,7 @@ data class ArticlePage(
     val list: List<Article>
 ) {
     /**
-     * Indicates whether another page is available according to the server total.
+     * 根据服务器返回的总数量判断是否还有下一页。
      */
     fun hasNext(): Boolean = page * size.toLong() < total
 }
