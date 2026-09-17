@@ -1,19 +1,18 @@
 package com.blog.app.data.repository
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.util.Base64
 import com.blog.app.core.config.ApiConfig
 import com.blog.app.core.storage.AuthStorage
 import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationRequest
-import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
 import net.openid.appauth.AuthorizationServiceConfiguration
-import net.openid.appauth.AuthState
-import net.openid.appauth.ResponseTypeValues
+import net.openid.appauth.CodeVerifierUtil
+import net.openid.appauth.TokenRequest
 import net.openid.appauth.TokenResponse
+import net.openid.appauth.ResponseTypeValues
 import org.json.JSONObject
 
 /**
@@ -28,39 +27,59 @@ class AuthRepository {
     }
 
     /**
-     * 创建 Android 端授权请求，交由 AppAuth 在应用内浏览器环境中打开。
+     * 创建应用内登录页面需要加载的授权地址。
      */
-    fun authorizationIntent(context: Context): Intent {
-        val request = AuthorizationRequest.Builder(
+    fun createAuthorizationRequest(): AuthorizationRequest {
+        val codeVerifier = CodeVerifierUtil.generateRandomCodeVerifier()
+
+        return AuthorizationRequest.Builder(
             serviceConfiguration(),
             ApiConfig.OAUTH_CLIENT_ID,
             ResponseTypeValues.CODE,
             Uri.parse(ApiConfig.OAUTH_REDIRECT_URI)
         )
             .setScope("openid")
+            .setCodeVerifier(codeVerifier)
             .build()
-
-        return AuthorizationService(context).getAuthorizationRequestIntent(request)
     }
 
     /**
-     * 处理授权码并换取令牌，同时保存本地登录状态。
+     * 使用授权码和 PKCE 验证码换取访问令牌，并保存登录状态。
      */
-    fun handleAuthorizationResponse(
+    fun exchangeAuthorizationCode(
         context: Context,
-        intent: Intent,
+        request: AuthorizationRequest,
+        callbackUri: Uri,
         onResult: (Result<Unit>) -> Unit
     ) {
-        val response = AuthorizationResponse.fromIntent(intent)
-        val exception = AuthorizationException.fromIntent(intent)
+        val code = callbackUri.getQueryParameter("code")
+        val state = callbackUri.getQueryParameter("state")
 
-        if (response == null) {
-            onResult(Result.failure(exception ?: IllegalStateException("登录授权失败")))
+        if (code.isNullOrBlank()) {
+            val error = callbackUri.getQueryParameter("error_description")
+                ?: callbackUri.getQueryParameter("error")
+                ?: "登录授权失败"
+            onResult(Result.failure(IllegalStateException(error)))
             return
         }
 
+        if (request.state != state) {
+            onResult(Result.failure(IllegalStateException("登录状态校验失败")))
+            return
+        }
+
+        val tokenRequest = TokenRequest.Builder(
+            serviceConfiguration(),
+            ApiConfig.OAUTH_CLIENT_ID
+        )
+            .setGrantType("authorization_code")
+            .setAuthorizationCode(code)
+            .setRedirectUri(Uri.parse(ApiConfig.OAUTH_REDIRECT_URI))
+            .setCodeVerifier(request.codeVerifier)
+            .build()
+
         val authorizationService = AuthorizationService(context)
-        authorizationService.performTokenRequest(response.createTokenExchangeRequest()) { tokenResponse, tokenException ->
+        authorizationService.performTokenRequest(tokenRequest) { tokenResponse, tokenException ->
             try {
                 if (tokenResponse == null) {
                     onResult(Result.failure(tokenException ?: IllegalStateException("获取登录令牌失败")))
@@ -73,11 +92,7 @@ class AuthRepository {
                     return@performTokenRequest
                 }
 
-                val authState = AuthState(serviceConfiguration())
-                authState.update(response, tokenException)
-                authState.update(tokenResponse, tokenException)
-
-                val username = readUsername(tokenResponse) ?: response.request.clientId
+                val username = readUsername(tokenResponse) ?: ApiConfig.OAUTH_CLIENT_ID
                 val expiresIn = tokenResponse.accessTokenExpirationTime?.let { expirationTime ->
                     ((expirationTime - System.currentTimeMillis()).coerceAtLeast(0L) / 1000L)
                 } ?: 0L
@@ -87,7 +102,7 @@ class AuthRepository {
                     accessToken = accessToken,
                     refreshToken = tokenResponse.refreshToken,
                     expiresIn = expiresIn,
-                    authState = authState.jsonSerializeString()
+                    authState = tokenResponse.jsonSerializeString()
                 )
                 onResult(Result.success(Unit))
             } finally {
