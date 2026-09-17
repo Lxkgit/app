@@ -44,6 +44,7 @@ fun AppNavigation(
     var selectedArticle by remember { mutableStateOf<Article?>(null) }
     var showSettings by remember { mutableStateOf(false) }
     var showFileManager by remember { mutableStateOf(false) }
+    var userRefreshKey by remember { mutableIntStateOf(0) }
 
     if (selectedArticle != null) {
         val goBack = { selectedArticle = null }
@@ -82,6 +83,7 @@ fun AppNavigation(
                 AuthRepository().logout()
                 showSettings = false
                 selectedTab = 2
+                userRefreshKey++
             }
         )
         return
@@ -119,7 +121,8 @@ fun AppNavigation(
                 2 -> UserScreen(
                     onLogin = onLogin,
                     onSettings = { showSettings = true },
-                    onFileManager = { showFileManager = true }
+                    onFileManager = { showFileManager = true },
+                    refreshKey = userRefreshKey
                 )
             }
         }
