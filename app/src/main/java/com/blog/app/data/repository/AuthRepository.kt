@@ -17,7 +17,7 @@ import net.openid.appauth.TokenResponse
 import org.json.JSONObject
 
 /**
- * Handles OAuth2 authorization code and PKCE authentication with the blog service.
+ * 处理博客服务的 OAuth2 授权码和 PKCE 登录流程。
  */
 class AuthRepository {
     private fun serviceConfiguration(): AuthorizationServiceConfiguration {
@@ -28,7 +28,7 @@ class AuthRepository {
     }
 
     /**
-     * Creates the browser authorization intent for the Android client.
+     * 创建 Android 端授权请求，交由 AppAuth 在应用内浏览器环境中打开。
      */
     fun authorizationIntent(context: Context): Intent {
         val request = AuthorizationRequest.Builder(
@@ -44,7 +44,7 @@ class AuthRepository {
     }
 
     /**
-     * Exchanges the authorization code and persists the authenticated state.
+     * 处理授权码并换取令牌，同时保存本地登录状态。
      */
     fun handleAuthorizationResponse(
         context: Context,
@@ -97,14 +97,14 @@ class AuthRepository {
     }
 
     /**
-     * Clears the local login state.
+     * 清除本地登录状态。
      */
     fun logout() {
         AuthStorage.clear()
     }
 
     /**
-     * Reads the username claim that the blog authorization server adds to the ID token.
+     * 读取授权服务器写入 ID Token 的用户名声明。
      */
     private fun readUsername(tokenResponse: TokenResponse): String? {
         val idToken = tokenResponse.idToken ?: return null
