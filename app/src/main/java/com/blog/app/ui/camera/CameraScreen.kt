@@ -62,7 +62,7 @@ fun CameraScreen(
     }
 
     LaunchedEffect(renderer, retryKey) {
-        val currentRenderer = renderer ?: return@LaunchedEffect
+        if (renderer == null) return@LaunchedEffect
         val currentPlayer = player ?: return@LaunchedEffect
         viewModel.play(currentPlayer)
     }
