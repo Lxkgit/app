@@ -10,30 +10,32 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
- * Personal page with the real blog authentication flow.
+ * Personal page with the blog OAuth2 authentication flow.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserScreen(
+    onLogin: () -> Unit,
     viewModel: UserViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refresh()
+    }
 
     Scaffold(
         topBar = {
@@ -55,25 +57,25 @@ fun UserScreen(
                     .padding(padding),
                 isLoading = state.isLoading,
                 errorMessage = state.errorMessage,
-                onLogin = viewModel::login
+                onLogin = {
+                    viewModel.beginLogin()
+                    onLogin()
+                }
             )
         }
     }
 }
 
 /**
- * Displays the blog login form.
+ * Displays the blog login entry point.
  */
 @Composable
 private fun LoginView(
     modifier: Modifier,
     isLoading: Boolean,
     errorMessage: String?,
-    onLogin: (String, String) -> Unit
+    onLogin: () -> Unit
 ) {
-    var username by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-
     Column(
         modifier = modifier.padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -83,25 +85,8 @@ private fun LoginView(
             style = MaterialTheme.typography.headlineMedium
         )
         Text(
-            text = "使用博客账号登录，登录状态会保存在本机。",
+            text = "点击登录后将在浏览器中完成博客账号认证。",
             style = MaterialTheme.typography.bodyMedium
-        )
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("账号") },
-            singleLine = true,
-            enabled = !isLoading
-        )
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("密码") },
-            singleLine = true,
-            enabled = !isLoading,
-            visualTransformation = PasswordVisualTransformation()
         )
         if (!errorMessage.isNullOrBlank()) {
             Text(
@@ -111,14 +96,14 @@ private fun LoginView(
             )
         }
         Button(
-            onClick = { onLogin(username, password) },
+            onClick = onLogin,
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading && username.isNotBlank() && password.isNotBlank()
+            enabled = !isLoading
         ) {
             if (isLoading) {
                 CircularProgressIndicator()
             } else {
-                Text("登录")
+                Text("登录博客")
             }
         }
     }
