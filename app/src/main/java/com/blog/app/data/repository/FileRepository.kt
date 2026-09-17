@@ -68,7 +68,7 @@ class FileRepository(
         return FileDirectory(
             id = value.int("id"),
             name = value.firstString("dirName", "name"),
-            path = value.string("dirPath"),
+            path = stripUserRoot(value.string("dirPath")),
             type = value.int("dirType")
         )
     }
@@ -83,6 +83,12 @@ class FileRepository(
             size = value.long("fileSize"),
             status = value.intOrNull("fileStatus")
         )
+    }
+
+    private fun stripUserRoot(path: String): String {
+        if (path.isBlank() || path == "/") return ""
+        val index = path.indexOf('/', 1)
+        return if (index >= 0) path.substring(index) else ""
     }
 
     private fun JsonObject.string(key: String): String =
