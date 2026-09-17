@@ -28,7 +28,7 @@ class AuthRepository {
     }
 
     /**
-     * Creates the browser authorization intent for the Android public client.
+     * Creates the browser authorization intent for the Android client.
      */
     fun authorizationIntent(context: Context): Intent {
         val request = AuthorizationRequest.Builder(
@@ -67,15 +67,26 @@ class AuthRepository {
                     return@performTokenRequest
                 }
 
+                val accessToken = tokenResponse.accessToken
+                if (accessToken.isNullOrBlank()) {
+                    onResult(Result.failure(IllegalStateException("登录服务未返回 access token")))
+                    return@performTokenRequest
+                }
+
                 val authState = AuthState(serviceConfiguration())
-                authState.update(response, tokenResponse, tokenException)
+                authState.update(response, tokenException)
+                authState.update(tokenResponse, tokenException)
 
                 val username = readUsername(tokenResponse) ?: response.request.clientId
+                val expiresIn = tokenResponse.accessTokenExpirationTime?.let { expirationTime ->
+                    ((expirationTime - System.currentTimeMillis()).coerceAtLeast(0L) / 1000L)
+                } ?: 0L
+
                 AuthStorage.saveLogin(
                     username = username,
-                    accessToken = tokenResponse.accessToken,
+                    accessToken = accessToken,
                     refreshToken = tokenResponse.refreshToken,
-                    expiresIn = tokenResponse.expiresIn,
+                    expiresIn = expiresIn,
                     authState = authState.jsonSerializeString()
                 )
                 onResult(Result.success(Unit))
