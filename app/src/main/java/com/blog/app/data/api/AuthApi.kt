@@ -6,11 +6,11 @@ import retrofit2.http.FormUrlEncoded
 import retrofit2.http.POST
 
 /**
- * Blog OAuth2 authorization service API.
+ * 博客 OAuth2 授权服务接口。
  */
 interface AuthApi {
     /**
-     * Logs in through the existing custom password grant.
+     * 通过旧的自定义密码模式登录。
      */
     @FormUrlEncoded
     @POST("oauth2/token")
