@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -19,6 +20,14 @@ import com.blog.app.navigation.AppNavigation
 class MainActivity : ComponentActivity() {
     private val authRepository = AuthRepository()
 
+    private val authLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.data != null) {
+            handleAuthIntent(result.data)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AuthStorage.initialize(applicationContext)
@@ -27,26 +36,19 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavigation(
                         onLogin = {
-                            startActivity(authRepository.authorizationIntent(this))
+                            authLauncher.launch(authRepository.authorizationIntent(this))
                         }
                     )
                 }
             }
         }
-        handleAuthIntent(intent)
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        handleAuthIntent(intent)
     }
 
     /**
      * Handles the OAuth2 redirect returned by the authorization server.
      */
     private fun handleAuthIntent(intent: Intent?) {
-        if (intent?.data?.scheme != "com.blog.app") {
+        if (intent == null) {
             return
         }
 
