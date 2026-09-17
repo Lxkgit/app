@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -46,25 +47,18 @@ fun AppNavigation() {
                 TopAppBar(
                     title = { Text("文章详情") },
                     navigationIcon = {
-                        Icon(
-                            painter = painterResource(R.drawable.icon_back),
-                            contentDescription = "返回",
-                            modifier = Modifier.padding(start = 12.dp).height(24.dp)
-                        )
+                        IconButton(onClick = goBack) {
+                            Icon(
+                                painter = painterResource(R.drawable.icon_back),
+                                contentDescription = "返回"
+                            )
+                        }
                     }
                 )
             }
         ) { padding ->
-            Column(
-                modifier = Modifier.fillMaxSize().padding(padding)
-            ) {
-                androidx.compose.foundation.layout.Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable(onClick = {})
-                ) {
-                    ArticleDetailScreen(selectedArticle!!)
-                }
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                ArticleDetailScreen(selectedArticle!!)
             }
         }
         return
@@ -95,9 +89,7 @@ fun AppNavigation() {
             }
         }
     ) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (selectedTab) {
                 0 -> HomeScreen(onArticleClick = { selectedArticle = it })
                 1 -> ArticleListScreen(onArticleClick = { selectedArticle = it })
