@@ -211,15 +211,10 @@ private fun PermissionCard(menu: UserMenu, onClick: (() -> Unit)?) {
         modifier = Modifier.fillMaxWidth(),
         onClick = { onClick?.invoke() }
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(menu.menuName, style = MaterialTheme.typography.titleMedium)
-            if (menu.children.isNotEmpty()) {
-                Text(
-                    menu.children.joinToString("、") { it.menuName },
-                    modifier = Modifier.padding(top = 8.dp),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
+        Text(
+            menu.menuName,
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.titleMedium
+        )
     }
 }
