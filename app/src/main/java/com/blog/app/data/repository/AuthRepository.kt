@@ -12,9 +12,9 @@ import net.openid.appauth.AuthorizationService
 import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.CodeVerifierUtil
 import net.openid.appauth.TokenRequest
-import net.openid.appauth.TokenResponse
 import net.openid.appauth.ResponseTypeValues
 import org.json.JSONObject
+import java.util.UUID
 
 /**
  * 处理博客服务的 OAuth2 授权码和 PKCE 登录流程。
@@ -32,6 +32,7 @@ class AuthRepository {
      */
     fun createAuthorizationRequest(): AuthorizationRequest {
         val codeVerifier = CodeVerifierUtil.generateRandomCodeVerifier()
+        val state = UUID.randomUUID().toString()
 
         return AuthorizationRequest.Builder(
             serviceConfiguration(),
@@ -40,6 +41,7 @@ class AuthRepository {
             Uri.parse(ApiConfig.OAUTH_REDIRECT_URI)
         )
             .setScope("openid")
+            .setState(state)
             .setCodeVerifier(codeVerifier)
             .build()
     }
@@ -135,7 +137,7 @@ class AuthRepository {
     /**
      * 读取授权服务器写入 ID Token 的用户名声明。
      */
-    private fun readUsername(tokenResponse: TokenResponse): String? {
+    private fun readUsername(tokenResponse: net.openid.appauth.TokenResponse): String? {
         val idToken = tokenResponse.idToken ?: return null
         return runCatching {
             val payload = idToken.split(".")[1]
