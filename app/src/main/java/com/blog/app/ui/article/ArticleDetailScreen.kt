@@ -24,7 +24,7 @@ import io.noties.markwon.ext.tasklist.TaskListPlugin
 import io.noties.markwon.image.glide.GlideImagesPlugin
 
 /**
- * Displays an article and renders its Markdown body.
+ * 显示文章并渲染 Markdown 正文。
  */
 @Composable
 fun ArticleDetailScreen(article: Article) {
