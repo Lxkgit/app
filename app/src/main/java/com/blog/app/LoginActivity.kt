@@ -9,6 +9,7 @@ import android.view.View
 import android.webkit.CookieManager
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
@@ -21,6 +22,8 @@ import com.blog.app.auth.OAuthUrlPolicy
 import com.blog.app.core.config.ApiConfig
 import com.blog.app.core.storage.AuthStorage
 import com.blog.app.data.repository.AuthRepository
+import com.blog.app.debug.DebugLog
+import com.blog.app.debug.DebugOverlay
 import net.openid.appauth.AuthorizationRequest
 
 /**
@@ -45,6 +48,11 @@ class LoginActivity : ComponentActivity() {
             ?.let { AuthorizationRequest.jsonDeserialize(it) }
             ?: authRepository.createAuthorizationRequest()
 
+        DebugLog.add("OAuth2 授权请求已创建")
+        DebugLog.add("授权地址: ${ApiConfig.OAUTH_AUTHORIZATION_ENDPOINT}")
+        DebugLog.add("客户端: ${ApiConfig.OAUTH_CLIENT_ID}")
+        DebugLog.add("回调地址: ${ApiConfig.OAUTH_REDIRECT_URI}")
+        DebugLog.add("开始加载授权页面: ${authorizationRequest.toUri()}")
         Log.d(TAG, "授权请求已创建")
         Log.d(TAG, "authorizationEndpoint=${ApiConfig.OAUTH_AUTHORIZATION_ENDPOINT}")
         Log.d(TAG, "clientId=${ApiConfig.OAUTH_CLIENT_ID}")
@@ -88,6 +96,7 @@ class LoginActivity : ComponentActivity() {
             setOnClickListener {
                 visibility = View.GONE
                 webView.visibility = View.VISIBLE
+                DebugLog.add("手动重试登录页面")
                 Log.d(TAG, "手动重试登录页面")
                 webView.reload()
             }
@@ -99,6 +108,7 @@ class LoginActivity : ComponentActivity() {
         })
         root.addView(errorView, FrameLayout.LayoutParams(-1, -1))
         setContentView(root)
+        DebugOverlay.attach(this, root)
     }
 
     /**
@@ -109,6 +119,7 @@ class LoginActivity : ComponentActivity() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                 progressBar.visibility = View.VISIBLE
                 errorView.visibility = View.GONE
+                DebugLog.add("页面开始加载: ${url ?: "null"}")
                 Log.d(TAG, "页面开始加载: ${url ?: "null"}")
                 if (url != null && handleUrl(Uri.parse(url))) {
                     view?.stopLoading()
@@ -118,19 +129,33 @@ class LoginActivity : ComponentActivity() {
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 progressBar.visibility = View.GONE
+                DebugLog.add("页面加载完成: ${url ?: "null"}")
                 Log.d(TAG, "页面加载完成: ${url ?: "null"}")
                 super.onPageFinished(view, url)
             }
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                DebugLog.add("WebView 导航 ${request.method}: ${request.url}")
                 Log.d(TAG, "WebView 导航: ${request.url}")
                 return handleUrl(request.url)
             }
 
             @Suppress("DEPRECATION")
             override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
+                DebugLog.add("WebView 导航: $url")
                 Log.d(TAG, "WebView 导航: $url")
                 return handleUrl(Uri.parse(url))
+            }
+
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                DebugLog.add("WebView 请求 ${request.method}: ${request.url}")
+                return super.shouldInterceptRequest(view, request)
+            }
+
+            @Suppress("DEPRECATION")
+            override fun shouldInterceptRequest(view: WebView, url: String): WebResourceResponse? {
+                DebugLog.add("WebView 请求: $url")
+                return super.shouldInterceptRequest(view, url)
             }
 
             override fun onReceivedError(
@@ -141,6 +166,7 @@ class LoginActivity : ComponentActivity() {
                 if (request.isForMainFrame) {
                     progressBar.visibility = View.GONE
                     errorView.visibility = View.VISIBLE
+                    DebugLog.add("页面加载失败 code=${error.errorCode}, description=${error.description}, url=${request.url}")
                     Log.e(TAG, "页面加载失败: code=${error.errorCode}, description=${error.description}, url=${request.url}")
                 }
                 super.onReceivedError(view, request, error)
@@ -157,6 +183,10 @@ class LoginActivity : ComponentActivity() {
             && uri.host.equals(redirectUri.host, true)
             && uri.path == redirectUri.path
         ) {
+            DebugLog.add("检测到 OAuth2 回调: ${uri.scheme}://${uri.host}${uri.path}")
+            DebugLog.add("callback code=${if (uri.getQueryParameter("code").isNullOrBlank()) "缺失" else "已返回"}")
+            DebugLog.add("callback state=${if (uri.getQueryParameter("state").isNullOrBlank()) "缺失" else "已返回"}")
+            DebugLog.add("callback error=${uri.getQueryParameter("error") ?: "无"}")
             Log.d(TAG, "检测到 OAuth2 回调: scheme=${uri.scheme}, host=${uri.host}, path=${uri.path}")
             Log.d(TAG, "callback code=${if (uri.getQueryParameter("code").isNullOrBlank()) "缺失" else "已返回"}")
             Log.d(TAG, "callback state=${if (uri.getQueryParameter("state").isNullOrBlank()) "缺失" else "已返回"}")
@@ -167,10 +197,12 @@ class LoginActivity : ComponentActivity() {
                 runOnUiThread {
                     progressBar.visibility = View.GONE
                     result.onSuccess {
+                        DebugLog.add("OAuth2 token 交换成功，登录完成")
                         Log.d(TAG, "OAuth2 token 交换成功，登录完成")
                         setResult(RESULT_OK)
                         finish()
                     }.onFailure { error ->
+                        DebugLog.add("OAuth2 token 交换失败: ${error.javaClass.simpleName}: ${error.message}")
                         Log.e(TAG, "OAuth2 token 交换失败: ${error.javaClass.simpleName}: ${error.message}", error)
                         webView.visibility = View.VISIBLE
                         Toast.makeText(
@@ -185,6 +217,7 @@ class LoginActivity : ComponentActivity() {
         }
 
         if (!authUrlPolicy.isAllowed(uri.toString())) {
+            DebugLog.add("阻止非授权服务地址: $uri")
             Log.w(TAG, "阻止非授权服务地址: $uri")
             return true
         }
