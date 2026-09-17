@@ -15,19 +15,19 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
- * Repository for the blog article and category APIs.
+ * 负责访问博客文章和分类接口的数据仓库。
  */
 class ArticleRepository(
     private val api: ArticleApi = NetworkModule.create(ArticleApi::class.java)
 ) {
     /**
-     * Loads the home article feed without category filtering.
+     * 获取首页文章列表，不进行分类筛选。
      */
     suspend fun getArticles(pageNum: Int, pageSize: Int): ArticlePage =
         getArticles(pageNum, pageSize, null)
 
     /**
-     * Loads articles with an optional category filter.
+     * 获取文章列表，并支持按分类筛选。
      */
     suspend fun getArticles(pageNum: Int, pageSize: Int, articleType: Long?): ArticlePage {
         val response = api.getArticles(
@@ -50,7 +50,7 @@ class ArticleRepository(
     }
 
     /**
-     * Loads the complete article category tree.
+     * 获取完整的文章分类树。
      */
     suspend fun getArticleTypes(): List<ArticleType> {
         val response = api.getArticleTypes()
