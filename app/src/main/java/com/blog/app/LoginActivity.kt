@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.webkit.CookieManager
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -15,6 +16,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.core.view.WindowCompat
+import com.blog.app.auth.OAuthUrlPolicy
 import com.blog.app.core.config.ApiConfig
 import com.blog.app.core.storage.AuthStorage
 import com.blog.app.data.repository.AuthRepository
@@ -25,6 +27,7 @@ import net.openid.appauth.AuthorizationRequest
  */
 class LoginActivity : ComponentActivity() {
     private val authRepository = AuthRepository()
+    private val authUrlPolicy = OAuthUrlPolicy(ApiConfig.AUTH_BASE_URL)
     private lateinit var webView: WebView
     private lateinit var progressBar: ProgressBar
     private lateinit var errorView: TextView
@@ -37,7 +40,10 @@ class LoginActivity : ComponentActivity() {
         AuthStorage.initialize(applicationContext)
         buildContentView()
 
-        authorizationRequest = authRepository.createAuthorizationRequest()
+        authorizationRequest = savedInstanceState?.getString(KEY_AUTHORIZATION_REQUEST)
+            ?.let { AuthorizationRequest.jsonDeserialize(it) }
+            ?: authRepository.createAuthorizationRequest()
+
         webView.loadUrl(authorizationRequest.toUri().toString())
     }
 
@@ -57,6 +63,7 @@ class LoginActivity : ComponentActivity() {
             settings.javaScriptCanOpenWindowsAutomatically = false
             settings.allowFileAccess = false
             settings.allowContentAccess = false
+            CookieManager.getInstance().setAcceptCookie(true)
             webViewClient = createWebViewClient()
         }
 
@@ -155,20 +162,25 @@ class LoginActivity : ComponentActivity() {
             return true
         }
 
-        val targetUri = Uri.parse(uri.toString())
-        val authUri = Uri.parse(ApiConfig.AUTH_BASE_URL)
-        if (!targetUri.scheme.equals(authUri.scheme, true)
-            || !targetUri.host.equals(authUri.host, true)
-        ) {
+        if (!authUrlPolicy.isAllowed(uri.toString())) {
             return true
         }
 
         return false
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(KEY_AUTHORIZATION_REQUEST, authorizationRequest.jsonSerializeString())
+        super.onSaveInstanceState(outState)
+    }
+
     override fun onDestroy() {
         webView.stopLoading()
         webView.destroy()
         super.onDestroy()
+    }
+
+    companion object {
+        private const val KEY_AUTHORIZATION_REQUEST = "authorization_request"
     }
 }
