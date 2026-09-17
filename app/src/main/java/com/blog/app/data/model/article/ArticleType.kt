@@ -1,7 +1,7 @@
 package com.blog.app.data.model.article
 
 /**
- * Article category tree node returned by the blog service.
+ * 博客服务返回的文章分类树节点。
  */
 data class ArticleType(
     val id: Long,
