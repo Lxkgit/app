@@ -6,15 +6,21 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -29,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -135,17 +142,25 @@ private fun UserInfoView(
     onFileManager: () -> Unit,
     onCamera: () -> Unit
 ) {
-    LazyColumn(
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
         modifier = modifier,
         contentPadding = PaddingValues(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item { UserHeader(state) }
-        if (!state.errorMessage.isNullOrBlank()) {
-            item { Text(state.errorMessage, color = MaterialTheme.colorScheme.error) }
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            UserHeader(state)
         }
+
+        if (!state.errorMessage.isNullOrBlank()) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Text(state.errorMessage, color = MaterialTheme.colorScheme.error)
+            }
+        }
+
         if (state.isLoading) {
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
@@ -154,8 +169,9 @@ private fun UserInfoView(
                 }
             }
         }
+
         state.menus.forEach { category ->
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Text(
                     category.menuName,
                     modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
@@ -163,10 +179,14 @@ private fun UserInfoView(
                 )
             }
             items(category.children, key = { it.id }) { menu ->
-                PermissionCard(menu = menu, onClick = if (menu.menuName == "文件云盘") onFileManager else null)
+                PermissionCard(
+                    menu = menu,
+                    onClick = if (menu.menuName == "文件云盘") onFileManager else null
+                )
             }
         }
-        item {
+
+        item(span = { GridItemSpan(maxLineSpan) }) {
             Text(
                 "设备监控",
                 modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
@@ -184,11 +204,25 @@ private fun UserInfoView(
  */
 @Composable
 private fun CameraPermissionCard(onClick: () -> Unit) {
-    Button(
+    Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().height(108.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
-        Text("摄像头监控")
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Icon(
+                Icons.Default.Videocam,
+                contentDescription = null,
+                modifier = Modifier.size(28.dp)
+            )
+            Text("摄像头监控", style = MaterialTheme.typography.titleMedium)
+            Text("实时查看", style = MaterialTheme.typography.bodySmall)
+        }
     }
 }
 
@@ -234,13 +268,26 @@ private fun UserHeader(state: UserUiState) {
 @Composable
 private fun PermissionCard(menu: UserMenu, onClick: (() -> Unit)?) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = { onClick?.invoke() }
-    ) {
-        Text(
-            menu.menuName,
-            modifier = Modifier.padding(16.dp),
-            style = MaterialTheme.typography.titleMedium
+        onClick = { onClick?.invoke() },
+        modifier = Modifier.fillMaxWidth().height(108.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Icon(
+                imageVector = if (menu.menuName == "文件云盘") Icons.Default.Folder else Icons.Default.Apps,
+                contentDescription = null,
+                modifier = Modifier.size(28.dp)
+            )
+            Text(menu.menuName, style = MaterialTheme.typography.titleMedium)
+            Text(
+                if (menu.menuName == "文件云盘") "文件管理" else "功能入口",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
     }
 }
