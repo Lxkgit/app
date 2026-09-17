@@ -6,6 +6,7 @@ import android.util.Base64
 import android.util.Log
 import com.blog.app.core.config.ApiConfig
 import com.blog.app.core.storage.AuthStorage
+import com.blog.app.debug.DebugLog
 import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationResponse
@@ -63,12 +64,14 @@ class AuthRepository {
             val error = callbackUri.getQueryParameter("error_description")
                 ?: callbackUri.getQueryParameter("error")
                 ?: "登录授权失败"
+            DebugLog.add("OAuth2 回调缺少 authorization code: $error")
             Log.e(TAG, "OAuth2 回调没有 authorization code: $error")
             onResult(Result.failure(IllegalStateException(error)))
             return
         }
 
         if (request.state.isNullOrBlank() || request.state != state) {
+            DebugLog.add("OAuth2 state 校验失败")
             Log.e(TAG, "OAuth2 state 校验失败")
             onResult(Result.failure(IllegalStateException("登录状态校验失败")))
             return
@@ -79,6 +82,7 @@ class AuthRepository {
             .build()
 
         if (authorizationResponse.authorizationCode.isNullOrBlank()) {
+            DebugLog.add("OAuth2 authorization response 无效")
             Log.e(TAG, "OAuth2 authorization response 无效")
             onResult(Result.failure(IllegalStateException("登录授权响应无效")))
             return
@@ -94,11 +98,14 @@ class AuthRepository {
             .setCodeVerifier(request.codeVerifier)
             .build()
 
+        DebugLog.add("POST ${ApiConfig.OAUTH_TOKEN_ENDPOINT}")
+        DebugLog.add("OAuth2 token 请求参数: grant_type=authorization_code, client_id=${ApiConfig.OAUTH_CLIENT_ID}, PKCE=已提供")
         Log.d(TAG, "开始请求 token endpoint: ${ApiConfig.OAUTH_TOKEN_ENDPOINT}")
         val authorizationService = AuthorizationService(context)
         authorizationService.performTokenRequest(tokenRequest) { tokenResponse, tokenException ->
             try {
                 if (tokenResponse == null) {
+                    DebugLog.add("OAuth2 token 响应失败: ${tokenException?.javaClass?.simpleName ?: "未知错误"}: ${tokenException?.message ?: "无响应"}")
                     Log.e(TAG, "token endpoint 请求失败", tokenException)
                     onResult(Result.failure(tokenException ?: IllegalStateException("获取登录令牌失败")))
                     return@performTokenRequest
@@ -106,6 +113,7 @@ class AuthRepository {
 
                 val accessToken = tokenResponse.accessToken
                 if (accessToken.isNullOrBlank()) {
+                    DebugLog.add("OAuth2 token 响应异常: 未返回 access_token")
                     Log.e(TAG, "token endpoint 没有返回 access token")
                     onResult(Result.failure(IllegalStateException("登录服务未返回 access token")))
                     return@performTokenRequest
@@ -127,6 +135,8 @@ class AuthRepository {
                     expiresIn = expiresIn,
                     authState = authState.jsonSerializeString()
                 )
+                DebugLog.add("OAuth2 token 响应成功: HTTP 请求完成，expiresIn=${expiresIn}s")
+                DebugLog.add("登录状态已保存: username=$username")
                 Log.d(TAG, "OAuth2 token 获取成功，username=$username, expiresIn=${expiresIn}s")
                 onResult(Result.success(Unit))
             } finally {
