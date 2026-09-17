@@ -74,7 +74,15 @@ object NetworkModule {
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
 
+    private val fileRetrofit = Retrofit.Builder()
+        .baseUrl(ApiConfig.FILE_BASE_URL)
+        .client(okHttpClient)
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        .build()
+
     fun <T> create(service: Class<T>): T = retrofit.create(service)
 
     fun <T> createAuth(service: Class<T>): T = authRetrofit.create(service)
+
+    fun <T> createFile(service: Class<T>): T = fileRetrofit.create(service)
 }
