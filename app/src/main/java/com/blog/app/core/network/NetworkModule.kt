@@ -38,7 +38,11 @@ object NetworkModule {
         response.close()
 
         if (!AuthSessionManager.waitForReLogin()) {
-            return@Interceptor chain.proceed(authenticatedRequest)
+            val unauthenticatedRetry = AuthSessionManager.markRetry(request)
+                .newBuilder()
+                .removeHeader("Authorization")
+                .build()
+            return@Interceptor chain.proceed(unauthenticatedRetry)
         }
 
         val newToken = AuthStorage.accessToken()
