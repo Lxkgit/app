@@ -7,8 +7,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.webrtc.AudioTrack
-import org.webrtc.Camera2Enumerator
 import org.webrtc.DefaultVideoDecoderFactory
 import org.webrtc.DefaultVideoEncoderFactory
 import org.webrtc.EglBase
@@ -18,12 +16,12 @@ import org.webrtc.MediaStream
 import org.webrtc.MediaStreamTrack
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
-import org.webrtc.RtpReceiver
 import org.webrtc.RtpTransceiver
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
 import org.webrtc.SurfaceViewRenderer
 import org.webrtc.VideoTrack
+import java.net.URLEncoder
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -44,7 +42,7 @@ class WebRtcCameraPlayer(
     private var factory: PeerConnectionFactory? = null
     private var peerConnection: PeerConnection? = null
     private var videoTrack: VideoTrack? = null
-    private var sessionUrl: String? = null
+    private var iceGatheringLatch: CountDownLatch? = null
 
     init {
         initializeFactory()
@@ -69,28 +67,27 @@ class WebRtcCameraPlayer(
         val connection = peerConnectionFactory.createPeerConnection(
             configuration,
             object : PeerConnection.Observer {
+                override fun onSignalingChange(newState: PeerConnection.SignalingState) = Unit
+                override fun onIceConnectionChange(newState: PeerConnection.IceConnectionState) = Unit
+                override fun onIceConnectionReceivingChange(receiving: Boolean) = Unit
+                override fun onIceGatheringChange(newState: PeerConnection.IceGatheringState) {
+                    if (newState == PeerConnection.IceGatheringState.COMPLETE) {
+                        iceGatheringLatch?.countDown()
+                    }
+                }
                 override fun onIceCandidate(candidate: IceCandidate) = Unit
                 override fun onIceCandidatesRemoved(candidates: Array<out IceCandidate>) = Unit
-                override fun onIceConnectionChange(newState: PeerConnection.IceConnectionState) = Unit
-                override fun onConnectionChange(newState: PeerConnection.PeerConnectionState) = Unit
-                override fun onIceConnectionReceivingChange(receiving: Boolean) = Unit
-                override fun onIceGatheringChange(newState: PeerConnection.IceGatheringState) = Unit
-                override fun onSignalingChange(newState: PeerConnection.SignalingState) = Unit
-                override fun onIceConnectionChange(state: PeerConnection.IceConnectionState) = Unit
-                override fun onDataChannel(dataChannel: org.webrtc.DataChannel) = Unit
-                override fun onRenegotiationNeeded() = Unit
                 override fun onAddStream(stream: MediaStream) {
                     stream.videoTracks.firstOrNull()?.let { attachVideoTrack(it) }
                 }
                 override fun onRemoveStream(stream: MediaStream) = Unit
+                override fun onDataChannel(dataChannel: org.webrtc.DataChannel) = Unit
+                override fun onRenegotiationNeeded() = Unit
                 override fun onTrack(transceiver: RtpTransceiver) {
                     (transceiver.receiver.track as? VideoTrack)?.let { attachVideoTrack(it) }
                 }
                 override fun onStandardizedIceConnectionChange(newState: PeerConnection.IceConnectionState) = Unit
                 override fun onSelectedCandidatePairChanged(event: PeerConnection.CandidatePairChangeEvent) = Unit
-                override fun onAudioTrack(receiver: RtpReceiver, mediaStream: MediaStream) {
-                    (receiver.track as? AudioTrack)?.setEnabled(true)
-                }
             }
         ) ?: throw IllegalStateException("创建 WebRTC 连接失败")
 
@@ -105,6 +102,7 @@ class WebRtcCameraPlayer(
         )
 
         val offer = createOffer(connection)
+        iceGatheringLatch = CountDownLatch(1)
         setLocalDescription(connection, offer)
         waitForIceGathering(connection)
 
@@ -189,24 +187,15 @@ class WebRtcCameraPlayer(
     }
 
     private fun waitForIceGathering(connection: PeerConnection) {
-        if (connection.iceGatheringState() == PeerConnection.IceGatheringState.COMPLETE) {
-            return
+        if (connection.iceGatheringState() != PeerConnection.IceGatheringState.COMPLETE) {
+            iceGatheringLatch?.await(5, TimeUnit.SECONDS)
         }
-        val latch = CountDownLatch(1)
-        val observer = object : PeerConnection.Observer by EmptyPeerConnectionObserver() {
-            override fun onIceGatheringChange(newState: PeerConnection.IceGatheringState) {
-                if (newState == PeerConnection.IceGatheringState.COMPLETE) {
-                    latch.countDown()
-                }
-            }
-        }
-        // MediaMTX 可接受完整 ICE SDP；播放器创建阶段已经开始收集候选。
-        // 这里最多等待 5 秒，避免弱网络下页面一直卡住。
-        latch.await(5, TimeUnit.SECONDS)
+        iceGatheringLatch = null
     }
 
     private fun postOffer(whepUrl: String, token: String, offerSdp: String): String {
-        val url = "$whepUrl?token=${java.net.URLEncoder.encode(token, Charsets.UTF_8.name())}"
+        val encodedToken = URLEncoder.encode(token, Charsets.UTF_8.name())
+        val url = "$whepUrl?token=$encodedToken"
         val request = Request.Builder()
             .url(url)
             .post(offerSdp.toRequestBody("application/sdp".toMediaType()))
@@ -214,9 +203,6 @@ class WebRtcCameraPlayer(
         httpClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
                 throw IllegalStateException("摄像头连接失败：HTTP ${response.code}")
-            }
-            sessionUrl = response.header("Location")?.let { location ->
-                if (location.startsWith("http")) location else "$whepUrl/$location"
             }
             return response.body?.string().orEmpty().ifBlank {
                 throw IllegalStateException("摄像头未返回 WebRTC SDP")
@@ -256,26 +242,8 @@ class WebRtcCameraPlayer(
         peerConnection?.close()
         peerConnection?.dispose()
         peerConnection = null
-        sessionUrl = null
-    }
-
-    private class EmptyPeerConnectionObserver : PeerConnection.Observer {
-        override fun onSignalingChange(newState: PeerConnection.SignalingState) = Unit
-        override fun onIceConnectionChange(newState: PeerConnection.IceConnectionState) = Unit
-        override fun onIceConnectionReceivingChange(receiving: Boolean) = Unit
-        override fun onIceGatheringChange(newState: PeerConnection.IceGatheringState) = Unit
-        override fun onIceCandidate(candidate: IceCandidate) = Unit
-        override fun onIceCandidatesRemoved(candidates: Array<out IceCandidate>) = Unit
-        override fun onAddStream(stream: MediaStream) = Unit
-        override fun onRemoveStream(stream: MediaStream) = Unit
-        override fun onDataChannel(dataChannel: org.webrtc.DataChannel) = Unit
-        override fun onRenegotiationNeeded() = Unit
-        override fun onAddTrack(receiver: RtpReceiver, mediaStreams: Array<out MediaStream>) = Unit
-        override fun onConnectionChange(newState: PeerConnection.PeerConnectionState) = Unit
-        override fun onStandardizedIceConnectionChange(newState: PeerConnection.IceConnectionState) = Unit
-        override fun onTrack(transceiver: RtpTransceiver) = Unit
-        override fun onSelectedCandidatePairChanged(event: PeerConnection.CandidatePairChangeEvent) = Unit
-        override fun onAudioTrack(receiver: RtpReceiver, mediaStream: MediaStream) = Unit
+        iceGatheringLatch?.countDown()
+        iceGatheringLatch = null
     }
 
     companion object {
