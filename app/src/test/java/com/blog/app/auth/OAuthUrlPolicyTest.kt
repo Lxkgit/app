@@ -1,6 +1,8 @@
 package com.blog.app.auth
 
+import com.blog.app.data.repository.AuthRepository
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -15,5 +17,13 @@ class OAuthUrlPolicyTest {
         assertFalse(policy.isAllowed("http://124.221.195.130:8080/auth/login"))
         assertFalse(policy.isAllowed("https://124.221.195.130/auth/login"))
         assertFalse(policy.isAllowed("http://evil.example/auth/login"))
+    }
+
+    @Test
+    fun authorizationRequestContainsState() {
+        val request = AuthRepository().createAuthorizationRequest()
+
+        assertNotNull(request.state)
+        assertTrue(request.state!!.isNotBlank())
     }
 }
