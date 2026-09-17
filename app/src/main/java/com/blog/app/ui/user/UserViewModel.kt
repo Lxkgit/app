@@ -1,13 +1,11 @@
 package com.blog.app.ui.user
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.blog.app.core.storage.AuthStorage
 import com.blog.app.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
 /**
  * UI state for the personal page authentication flow.
@@ -20,7 +18,7 @@ data class UserUiState(
 )
 
 /**
- * Coordinates login and logout for the personal page.
+ * Coordinates OAuth2 login and logout for the personal page.
  */
 class UserViewModel(
     private val repository: AuthRepository = AuthRepository()
@@ -29,28 +27,32 @@ class UserViewModel(
     val uiState: StateFlow<UserUiState> = _uiState.asStateFlow()
 
     /**
-     * Logs in through the existing blog authentication service.
+     * Refreshes the displayed login state from persistent storage.
      */
-    fun login(username: String, password: String) {
-        if (username.isBlank() || password.isBlank()) {
-            return
-        }
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            runCatching { repository.login(username.trim(), password) }
-                .onSuccess {
-                    _uiState.value = UserUiState(
-                        loggedIn = true,
-                        username = username.trim()
-                    )
-                }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = error.message ?: "登录失败"
-                    )
-                }
-        }
+    fun refresh() {
+        _uiState.value = UserUiState(
+            loggedIn = AuthStorage.isLoggedIn(),
+            username = AuthStorage.username(),
+            isLoading = false,
+            errorMessage = _uiState.value.errorMessage
+        )
+    }
+
+    /**
+     * Marks the authorization flow as loading.
+     */
+    fun beginLogin() {
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+    }
+
+    /**
+     * Displays an authorization error.
+     */
+    fun loginFailed(message: String) {
+        _uiState.value = _uiState.value.copy(
+            isLoading = false,
+            errorMessage = message
+        )
     }
 
     /**
