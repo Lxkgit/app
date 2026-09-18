@@ -51,10 +51,14 @@ fun CameraScreen(
     var player by remember { mutableStateOf<WebRtcCameraPlayer?>(null) }
     var retryKey by remember { mutableIntStateOf(0) }
 
-    BackHandler(onBack = onBack)
+    BackHandler(onBack = {
+        viewModel.stop(player)
+        onBack()
+    })
 
     DisposableEffect(Unit) {
         onDispose {
+            viewModel.stop(player)
             player?.release()
             player = null
             renderer = null
@@ -72,7 +76,10 @@ fun CameraScreen(
             TopAppBar(
                 title = { Text("摄像头监控") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        viewModel.stop(player)
+                        onBack()
+                    }) {
                         Icon(
                             painter = painterResource(R.drawable.icon_back),
                             contentDescription = "返回"
