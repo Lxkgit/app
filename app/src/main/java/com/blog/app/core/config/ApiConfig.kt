@@ -7,12 +7,7 @@ object ApiConfig {
     /**
      * 博客内容服务基础地址。
      */
-    const val BASE_URL = "http://124.221.195.130/api/content/"
-
-    /**
-     * 博客文件服务基础地址。
-     */
-    const val FILE_BASE_URL = "http://124.221.195.130/api/file/"
+    const val BASE_URL = "http://124.221.195.130/"
 
     /**
      * 摄像头 WebRTC/WHEP 播放地址。
