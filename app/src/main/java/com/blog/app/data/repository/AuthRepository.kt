@@ -18,6 +18,8 @@ import net.openid.appauth.ResponseTypeValues
 import net.openid.appauth.TokenRequest
 import org.json.JSONObject
 import java.util.UUID
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * 处理博客服务的 OAuth2 授权码和 PKCE 登录流程。
@@ -147,6 +149,72 @@ class AuthRepository {
                 authorizationService.dispose()
             }
         }
+    }
+
+    /**
+     * 使用保存的 refresh_token 获取新的 access_token。
+     *
+     * 刷新失败时不清除登录状态，由网络层决定是否进入重新登录流程。
+     */
+    fun refreshAccessToken(): Boolean {
+        val context = AuthStorage.context() ?: return false
+        val refreshToken = AuthStorage.refreshToken()
+        if (refreshToken.isNullOrBlank()) {
+            Log.w(TAG, "没有可用的 refresh_token")
+            return false
+        }
+
+        val tokenRequest = TokenRequest.Builder(
+            serviceConfiguration(),
+            ApiConfig.OAUTH_CLIENT_ID
+        )
+            .setGrantType("refresh_token")
+            .setRefreshToken(refreshToken)
+            .build()
+
+        val latch = CountDownLatch(1)
+        val success = AtomicBoolean(false)
+        val authorizationService = authorizationService(context)
+
+        try {
+            Log.d(TAG, "开始使用 refresh_token 刷新 access_token")
+            authorizationService.performTokenRequest(tokenRequest) { tokenResponse, tokenException ->
+                try {
+                    if (tokenResponse == null || tokenResponse.accessToken.isNullOrBlank()) {
+                        Log.e(TAG, "refresh_token 刷新失败", tokenException)
+                        return@performTokenRequest
+                    }
+
+                    val newAccessToken = tokenResponse.accessToken
+                    val newRefreshToken = tokenResponse.refreshToken ?: refreshToken
+                    val expiresIn = tokenResponse.accessTokenExpirationTime?.let { expirationTime ->
+                        ((expirationTime - System.currentTimeMillis()).coerceAtLeast(0L) / 1000L)
+                    } ?: 0L
+
+                    AuthStorage.saveLogin(
+                        username = AuthStorage.username(),
+                        accessToken = newAccessToken,
+                        refreshToken = newRefreshToken,
+                        expiresIn = expiresIn,
+                        authState = AuthStorage.authState().orEmpty()
+                    )
+                    success.set(true)
+                    Log.d(TAG, "refresh_token 刷新成功，expiresIn=${expiresIn}s")
+                } finally {
+                    latch.countDown()
+                }
+            }
+            latch.await()
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            Log.e(TAG, "等待 refresh_token 刷新结果被中断", e)
+        } catch (e: Exception) {
+            Log.e(TAG, "refresh_token 刷新异常", e)
+        } finally {
+            authorizationService.dispose()
+        }
+
+        return success.get()
     }
 
     /**
