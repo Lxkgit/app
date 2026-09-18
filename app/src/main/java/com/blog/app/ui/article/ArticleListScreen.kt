@@ -16,6 +16,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -90,7 +98,7 @@ fun ArticleListScreen(
 }
 
 /**
- * 显示分类树，每个节点独立维护展开状态。
+ * 显示分类树，父级和子级都支持直接筛选。
  */
 @Composable
 private fun CategoryTree(
@@ -99,22 +107,28 @@ private fun CategoryTree(
     var expandedIds by remember { mutableStateOf(emptySet<Long>()) }
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(20.dp)
     ) {
         LazyColumn(
-            modifier = Modifier.fillMaxWidth().height(220.dp),
+            modifier = Modifier.fillMaxWidth().height(280.dp),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
             items(categories, key = { it.id }) { category ->
-                CategoryNode(category, 0, selectedType, expandedIds,
-                    { id -> expandedIds = if (id in expandedIds) expandedIds - id else expandedIds + id }, onSelect)
+                CategoryNode(
+                    category = category,
+                    level = 0,
+                    selectedType = selectedType,
+                    expandedIds = expandedIds,
+                    onToggle = { id -> expandedIds = if (id in expandedIds) expandedIds - id else expandedIds + id },
+                    onSelect = onSelect
+                )
             }
         }
     }
 }
 
 /**
- * 递归显示一个分类节点及其子节点。
+ * 递归显示分类节点，点击节点本身进行筛选，展开按钮单独控制子分类。
  */
 @Composable
 private fun CategoryNode(
@@ -123,18 +137,42 @@ private fun CategoryNode(
 ) {
     val hasChildren = category.children.isNotEmpty()
     val expanded = category.id in expandedIds
-    Row(
-        modifier = Modifier.fillMaxWidth().clickable {
-            if (hasChildren) onToggle(category.id) else onSelect(category)
-        }.padding(start = (16 + level * 22).dp, end = 16.dp, top = 10.dp, bottom = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    val selected = selectedType == category.id
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface
     ) {
-        Text(if (!hasChildren) "•" else if (expanded) "⌄" else "›")
-        Text(
-            category.typeName,
-            modifier = Modifier.weight(1f),
-            fontWeight = if (selectedType == category.id) FontWeight.Bold else FontWeight.Normal
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable { onSelect(category) }
+                .padding(start = (8 + level * 22).dp, end = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (hasChildren) {
+                IconButton(onClick = { onToggle(category.id) }) {
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (expanded) "收起分类" else "展开分类"
+                    )
+                }
+            } else {
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(24.dp))
+            }
+            Text(
+                text = category.typeName,
+                modifier = Modifier.weight(1f).padding(vertical = 12.dp),
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface
+            )
+            if (selected) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "已选择",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(end = 12.dp)
+                )
+            }
+        }
     }
     if (expanded) category.children.forEach { child ->
         CategoryNode(child, level + 1, selectedType, expandedIds, onToggle, onSelect)
