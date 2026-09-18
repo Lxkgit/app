@@ -11,7 +11,7 @@ interface MenuApi {
     /**
      * 获取当前登录用户的权限菜单。
      */
-    @GET("api/content/menu/list/user")
+    @GET("auth/api/content/menu/list/user")
     suspend fun getUserMenus(
         @Query("menuType") menuType: Int = 2
     ): JsonElement
