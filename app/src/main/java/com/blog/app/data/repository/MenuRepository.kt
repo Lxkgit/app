@@ -15,7 +15,7 @@ import kotlinx.serialization.json.longOrNull
  * 用户权限菜单数据仓库。
  */
 class MenuRepository(
-    private val api: MenuApi = NetworkModule.createAuth(MenuApi::class.java)
+    private val api: MenuApi = NetworkModule.create(MenuApi::class.java)
 ) {
     /**
      * 获取当前登录用户的权限菜单。
