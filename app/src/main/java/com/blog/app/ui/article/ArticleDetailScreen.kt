@@ -3,6 +3,9 @@ package com.blog.app.ui.article
 import android.text.method.LinkMovementMethod
 import android.widget.TextView
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -42,6 +45,14 @@ fun ArticleDetailScreen(article: Article) {
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 24.dp)
     ) {
+        article.contentImg?.takeIf { it.isNotBlank() }?.let { imageUrl ->
+            AsyncImage(
+                model = if (imageUrl.startsWith("http")) imageUrl else "http://124.221.195.130" + imageUrl,
+                contentDescription = article.title,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
+                contentScale = ContentScale.Crop
+            )
+        }
         Text(
             text = article.title,
             style = MaterialTheme.typography.headlineMedium
