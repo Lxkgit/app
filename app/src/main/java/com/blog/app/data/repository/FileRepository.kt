@@ -17,7 +17,7 @@ import kotlinx.serialization.json.put
  * 文件云盘数据仓库。
  */
 class FileRepository(
-    private val api: FileApi = NetworkModule.createFile(FileApi::class.java)
+    private val api: FileApi = NetworkModule.create(FileApi::class.java)
 ) {
     /**
      * 查询当前目录下的目录和文件。
