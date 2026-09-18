@@ -17,8 +17,6 @@ object ApiConfig {
     /**
      * 对外提供给 Android 使用的 OAuth2/OIDC 授权服务基础地址。
      */
-    const val AUTH_BASE_URL = "http://124.221.195.130/auth/"
-
     /**
      * 手机端 OAuth2 客户端标识。
      */
@@ -32,10 +30,10 @@ object ApiConfig {
     /**
      * OAuth2 授权地址。
      */
-    const val OAUTH_AUTHORIZATION_ENDPOINT = "${AUTH_BASE_URL}oauth2/authorize"
+    const val OAUTH_AUTHORIZATION_ENDPOINT = "${BASE_URL}auth/oauth2/authorize"
 
     /**
      * OAuth2 令牌地址。
      */
-    const val OAUTH_TOKEN_ENDPOINT = "${AUTH_BASE_URL}oauth2/token"
+    const val OAUTH_TOKEN_ENDPOINT = "${BASE_URL}auth/oauth2/token"
 }
