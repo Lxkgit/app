@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -47,6 +48,7 @@ import com.blog.app.data.model.menu.UserMenu
 /**
  * 个人页面。
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserScreen(
     onLogin: () -> Unit,
