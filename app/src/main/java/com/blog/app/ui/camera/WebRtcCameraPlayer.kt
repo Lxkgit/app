@@ -49,7 +49,7 @@ class WebRtcCameraPlayer(
     init {
         initializeFactory()
         renderer.init(eglBase.eglBaseContext, null)
-        renderer.setEnableHardwareScaler(true)
+        renderer.setEnableHardwareScaler(false)
         renderer.setMirror(false)
         renderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
     }
