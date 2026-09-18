@@ -14,13 +14,20 @@ object AuthStorage {
     private const val AUTH_STATE = "auth_state"
 
     private var preferences: android.content.SharedPreferences? = null
+    private var applicationContext: Context? = null
 
     /**
      * 初始化本地持久化存储。
      */
     fun initialize(context: Context) {
-        preferences = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        applicationContext = context.applicationContext
+        preferences = applicationContext?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
+
+    /**
+     * 获取应用上下文。
+     */
+    fun context(): Context? = applicationContext
 
     /**
      * 获取当前访问令牌。
