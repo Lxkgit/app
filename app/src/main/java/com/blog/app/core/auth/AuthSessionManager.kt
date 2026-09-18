@@ -11,6 +11,7 @@ import kotlin.concurrent.withLock
  */
 object AuthSessionManager {
     private const val AUTH_RETRY_HEADER = "X-Blog-Auth-Retry"
+    private const val REFRESH_RETRY_HEADER = "X-Blog-Auth-Refresh-Retry"
 
     private val lock = ReentrantLock()
     private val loginCondition = lock.newCondition()
@@ -105,6 +106,20 @@ object AuthSessionManager {
      */
     fun isRetryRequest(request: okhttp3.Request): Boolean =
         request.header(AUTH_RETRY_HEADER) == "1"
+
+    /**
+     * 判断请求是否已经使用过 refresh_token 重试。
+     */
+    fun isRefreshRetryRequest(request: okhttp3.Request): Boolean =
+        request.header(REFRESH_RETRY_HEADER) == "1"
+
+    /**
+     * 为 refresh_token 重试添加一次性标记。
+     */
+    fun markRefreshRetry(request: okhttp3.Request): okhttp3.Request =
+        request.newBuilder()
+            .header(REFRESH_RETRY_HEADER, "1")
+            .build()
 
     /**
      * 为重新登录后的请求添加一次性重试标记。
