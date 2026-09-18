@@ -13,7 +13,7 @@ interface AuthApi {
      * 通过旧的自定义密码模式登录。
      */
     @FormUrlEncoded
-    @POST("oauth2/token")
+    @POST("auth/oauth2/token")
     suspend fun login(
         @Field("grant_type") grantType: String,
         @Field("client_id") clientId: String,
