@@ -2,6 +2,8 @@ package com.blog.app.ui.camera
 
 import android.app.Activity
 import android.content.pm.ActivityInfo
+import android.app.Activity
+import android.content.pm.ActivityInfo
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +34,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,6 +60,27 @@ fun CameraScreen(
     var player by remember { mutableStateOf<WebRtcCameraPlayer?>(null) }
     var retryKey by remember { mutableIntStateOf(0) }
     var fullScreen by remember { mutableStateOf(false) }
+    val activity = androidx.compose.ui.platform.LocalContext.current as? Activity
+
+    LaunchedEffect(fullScreen) {
+        activity ?: return@LaunchedEffect
+        activity.requestedOrientation = if (fullScreen) {
+            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
+
+        val controller = WindowInsetsControllerCompat(activity.window, activity.window.decorView)
+        if (fullScreen) {
+            WindowCompat.setDecorFitsSystemWindows(activity.window, false)
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        } else {
+            controller.show(WindowInsetsCompat.Type.systemBars())
+            WindowCompat.setDecorFitsSystemWindows(activity.window, true)
+        }
+    }
     val activity = (LocalContext.current as? Activity)
 
     fun enterFullScreen() {
@@ -93,6 +119,12 @@ fun CameraScreen(
             viewModel.stop(player)
             player?.release()
             player = null
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            activity?.let {
+                WindowInsetsControllerCompat(it.window, it.window.decorView)
+                    .show(WindowInsetsCompat.Type.systemBars())
+                WindowCompat.setDecorFitsSystemWindows(it.window, true)
+            }
             renderer = null
         }
     }
@@ -177,6 +209,19 @@ fun CameraScreen(
                             tint = Color.White
                         )
                     }
+                }
+
+                IconButton(
+                    onClick = { fullScreen = !fullScreen },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(12.dp)
+                ) {
+                    Icon(
+                        if (fullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+                        contentDescription = if (fullScreen) "退出全屏" else "全屏",
+                        tint = Color.White
+                    )
                 }
 
                 if (fullScreen) {
