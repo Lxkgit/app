@@ -1,7 +1,7 @@
 package com.blog.app.data.repository
 
 import com.blog.app.core.network.NetworkModule
-import com.blog.app.data.api.CameraApi
+import com.blog.app.data.api.file.CameraApi
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
