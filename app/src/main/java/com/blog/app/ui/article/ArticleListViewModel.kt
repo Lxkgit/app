@@ -47,14 +47,11 @@ class ArticleListViewModel(
      */
     private fun loadCategories() {
         viewModelScope.launch {
-            runCatching { repository.getArticleTypes() }
-                .onSuccess { categories ->
+            runCatching { repository.getArticleTypes() }.onSuccess { categories ->
                     _uiState.value = _uiState.value.copy(
-                        categories = categories,
-                        isCategoryLoading = false
+                        categories = categories, isCategoryLoading = false
                     )
-                }
-                .onFailure {
+                }.onFailure {
                     _uiState.value = _uiState.value.copy(isCategoryLoading = false)
                 }
         }
@@ -86,8 +83,7 @@ class ArticleListViewModel(
                 )
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = error.message ?: "文章加载失败"
+                    isLoading = false, errorMessage = error.message ?: "文章加载失败"
                 )
             }
         }
@@ -102,8 +98,7 @@ class ArticleListViewModel(
             return
         }
         _uiState.value = _uiState.value.copy(
-            selectedType = typeId,
-            selectedTypeName = category?.typeName ?: "全部分类"
+            selectedType = typeId, selectedTypeName = category?.typeName ?: "全部分类"
         )
         loadFirstPage()
     }
@@ -129,8 +124,7 @@ class ArticleListViewModel(
                 )
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(
-                    isLoadingMore = false,
-                    errorMessage = error.message ?: "更多文章加载失败"
+                    isLoadingMore = false, errorMessage = error.message ?: "更多文章加载失败"
                 )
             }
         }

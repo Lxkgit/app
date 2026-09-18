@@ -11,13 +11,13 @@ interface ArticleApi {
     /**
      * 获取文章分类树。
      */
-    @GET("api/content/article/type/tree")
+    @GET("content/article/type/tree")
     suspend fun getArticleTypes(): JsonElement
 
     /**
      * 获取分页文章列表。
      */
-    @GET("api/content/article/list")
+    @GET("content/article/list")
     suspend fun getArticles(
         @Query("pageNum") pageNum: Int,
         @Query("pageSize") pageSize: Int,

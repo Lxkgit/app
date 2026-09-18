@@ -36,8 +36,7 @@ class CameraViewModel(
                 throw throwable
             } catch (throwable: Throwable) {
                 _uiState.value = CameraUiState(
-                    isLoading = false,
-                    errorMessage = throwable.message ?: "摄像头连接失败"
+                    isLoading = false, errorMessage = throwable.message ?: "摄像头连接失败"
                 )
             }
         }
@@ -75,7 +74,5 @@ class CameraViewModel(
  * 摄像头页面状态。
  */
 data class CameraUiState(
-    val isLoading: Boolean = false,
-    val playing: Boolean = false,
-    val errorMessage: String? = null
+    val isLoading: Boolean = false, val playing: Boolean = false, val errorMessage: String? = null
 )

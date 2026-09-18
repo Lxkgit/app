@@ -32,12 +32,9 @@ import io.noties.markwon.image.glide.GlideImagesPlugin
 @Composable
 fun ArticleDetailScreen(article: Article) {
     val context = LocalContext.current
-    val markwon = Markwon.builder(context)
-        .usePlugin(TablePlugin.create(context))
-        .usePlugin(TaskListPlugin.create(context))
-        .usePlugin(StrikethroughPlugin.create())
-        .usePlugin(GlideImagesPlugin.create(Glide.with(context)))
-        .build()
+    val markwon = Markwon.builder(context).usePlugin(TablePlugin.create(context))
+        .usePlugin(TaskListPlugin.create(context)).usePlugin(StrikethroughPlugin.create())
+        .usePlugin(GlideImagesPlugin.create(Glide.with(context))).build()
 
     Column(
         modifier = Modifier
@@ -49,13 +46,14 @@ fun ArticleDetailScreen(article: Article) {
             AsyncImage(
                 model = if (imageUrl.startsWith("http")) imageUrl else "http://124.221.195.130" + imageUrl,
                 contentDescription = article.title,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 18.dp),
                 contentScale = ContentScale.Crop
             )
         }
         Text(
-            text = article.title,
-            style = MaterialTheme.typography.headlineMedium
+            text = article.title, style = MaterialTheme.typography.headlineMedium
         )
         Text(
             text = buildString {
@@ -74,23 +72,18 @@ fun ArticleDetailScreen(article: Article) {
         )
         if (article.content.isBlank()) {
             Text(
-                text = "文章暂无正文",
-                style = MaterialTheme.typography.bodyLarge
+                text = "文章暂无正文", style = MaterialTheme.typography.bodyLarge
             )
         } else {
-            AndroidView(
-                modifier = Modifier.fillMaxWidth(),
-                factory = {
-                    TextView(it).apply {
-                        textSize = 16f
-                        setTextIsSelectable(true)
-                        movementMethod = LinkMovementMethod.getInstance()
-                    }
-                },
-                update = { textView ->
-                    markwon.setMarkdown(textView, article.content)
+            AndroidView(modifier = Modifier.fillMaxWidth(), factory = {
+                TextView(it).apply {
+                    textSize = 16f
+                    setTextIsSelectable(true)
+                    movementMethod = LinkMovementMethod.getInstance()
                 }
-            )
+            }, update = { textView ->
+                markwon.setMarkdown(textView, article.content)
+            })
         }
     }
 }

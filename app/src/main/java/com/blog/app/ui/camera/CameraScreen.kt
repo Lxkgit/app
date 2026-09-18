@@ -45,8 +45,7 @@ import org.webrtc.SurfaceViewRenderer
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraScreen(
-    onBack: () -> Unit,
-    viewModel: CameraViewModel = viewModel()
+    onBack: () -> Unit, viewModel: CameraViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var renderer by remember { mutableStateOf<SurfaceViewRenderer?>(null) }
@@ -82,48 +81,48 @@ fun CameraScreen(
         containerColor = if (fullScreen) Color.Black else MaterialTheme.colorScheme.background,
         topBar = {
             if (!fullScreen) {
-                TopAppBar(
-                    title = { Text("摄像头") },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            viewModel.stop(player)
-                            onBack()
-                        }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "返回")
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { fullScreen = true }) {
-                            Icon(Icons.Default.Fullscreen, contentDescription = "全屏")
-                        }
+                TopAppBar(title = { Text("摄像头") }, navigationIcon = {
+                    IconButton(onClick = {
+                        viewModel.stop(player)
+                        onBack()
+                    }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
                     }
-                )
+                }, actions = {
+                    IconButton(onClick = { fullScreen = true }) {
+                        Icon(Icons.Default.Fullscreen, contentDescription = "全屏")
+                    }
+                })
             }
-        }
-    ) { padding ->
-        Column(Modifier.fillMaxSize().padding(if (fullScreen) androidx.compose.foundation.layout.PaddingValues(0.dp) else padding)) {
+        }) { padding ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(if (fullScreen) androidx.compose.foundation.layout.PaddingValues(0.dp) else padding)
+        ) {
             Box(
                 modifier = if (fullScreen) {
                     Modifier.fillMaxSize()
                 } else {
-                    Modifier.fillMaxWidth().aspectRatio(16f / 9f)
-                }.background(Color.Black),
-                contentAlignment = Alignment.Center
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(16f / 9f)
+                }.background(Color.Black), contentAlignment = Alignment.Center
             ) {
                 AndroidView(
-                    modifier = Modifier.fillMaxSize(),
-                    factory = { context ->
+                    modifier = Modifier.fillMaxSize(), factory = { context ->
                         SurfaceViewRenderer(context).also {
                             renderer = it
                             player = WebRtcCameraPlayer(context, it)
                         }
-                    }
-                )
+                    })
 
                 if (state.isLoading) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
-                        Text("正在连接摄像头...", Modifier.padding(top = 10.dp), color = Color.White)
+                        Text(
+                            "正在连接摄像头...", Modifier.padding(top = 10.dp), color = Color.White
+                        )
                     }
                 }
 
@@ -146,15 +145,23 @@ fun CameraScreen(
                 if (fullScreen) {
                     Text(
                         "● LIVE  ·  CAM 01",
-                        modifier = Modifier.align(Alignment.TopStart).padding(start = 16.dp, top = 28.dp),
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(start = 16.dp, top = 28.dp),
                         color = Color.White,
                         style = MaterialTheme.typography.labelLarge
                     )
                     IconButton(
                         onClick = { fullScreen = false },
-                        modifier = Modifier.align(Alignment.TopEnd).padding(top = 18.dp, end = 8.dp)
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 18.dp, end = 8.dp)
                     ) {
-                        Icon(Icons.Default.FullscreenExit, contentDescription = "退出全屏", tint = Color.White)
+                        Icon(
+                            Icons.Default.FullscreenExit,
+                            contentDescription = "退出全屏",
+                            tint = Color.White
+                        )
                     }
                 }
             }

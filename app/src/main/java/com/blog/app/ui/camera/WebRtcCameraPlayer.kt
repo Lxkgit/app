@@ -30,21 +30,18 @@ import java.util.concurrent.TimeUnit
  * MediaMTX WHEP 摄像头播放器。
  */
 class WebRtcCameraPlayer(
-    private val context: Context,
-    private val renderer: SurfaceViewRenderer
+    private val context: Context, private val renderer: SurfaceViewRenderer
 ) {
     private val eglBase = EglBase.create()
-    private val httpClient = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .writeTimeout(15, TimeUnit.SECONDS)
-        .build()
+    private val httpClient = OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS).writeTimeout(15, TimeUnit.SECONDS).build()
 
     private var factory: PeerConnectionFactory? = null
     private var peerConnection: PeerConnection? = null
     private var videoTrack: VideoTrack? = null
     private var iceGatheringLatch: CountDownLatch? = null
     private var currentCall: Call? = null
+
     @Volatile
     private var stopped = false
 
@@ -70,30 +67,34 @@ class WebRtcCameraPlayer(
         }
 
         val connection = peerConnectionFactory.createPeerConnection(
-            configuration,
-            object : PeerConnection.Observer {
+            configuration, object : PeerConnection.Observer {
                 override fun onSignalingChange(newState: PeerConnection.SignalingState) = Unit
-                override fun onIceConnectionChange(newState: PeerConnection.IceConnectionState) = Unit
+                override fun onIceConnectionChange(newState: PeerConnection.IceConnectionState) =
+                    Unit
+
                 override fun onIceConnectionReceivingChange(receiving: Boolean) = Unit
                 override fun onIceGatheringChange(newState: PeerConnection.IceGatheringState) {
                     if (newState == PeerConnection.IceGatheringState.COMPLETE) {
                         iceGatheringLatch?.countDown()
                     }
                 }
+
                 override fun onIceCandidate(candidate: IceCandidate) = Unit
                 override fun onIceCandidatesRemoved(candidates: Array<out IceCandidate>) = Unit
                 override fun onAddStream(stream: MediaStream) {
                     stream.videoTracks.firstOrNull()?.let { attachVideoTrack(it) }
                 }
+
                 override fun onRemoveStream(stream: MediaStream) = Unit
                 override fun onDataChannel(dataChannel: org.webrtc.DataChannel) = Unit
                 override fun onRenegotiationNeeded() = Unit
                 override fun onTrack(transceiver: RtpTransceiver) {
                     (transceiver.receiver.track() as? VideoTrack)?.let { attachVideoTrack(it) }
                 }
-                override fun onStandardizedIceConnectionChange(newState: PeerConnection.IceConnectionState) = Unit
-            }
-        ) ?: throw IllegalStateException("创建 WebRTC 连接失败")
+
+                override fun onStandardizedIceConnectionChange(newState: PeerConnection.IceConnectionState) =
+                    Unit
+            }) ?: throw IllegalStateException("创建 WebRTC 连接失败")
 
         peerConnection = connection
         connection.addTransceiver(
@@ -112,8 +113,8 @@ class WebRtcCameraPlayer(
 
         if (stopped) throw kotlinx.coroutines.CancellationException()
 
-        val localDescription = connection.localDescription
-            ?: throw IllegalStateException("WebRTC 本地 SDP 创建失败")
+        val localDescription =
+            connection.localDescription ?: throw IllegalStateException("WebRTC 本地 SDP 创建失败")
         val answer = postOffer(whepUrl, token, localDescription.description)
         setRemoteDescription(connection, answer)
     }
@@ -156,8 +157,7 @@ class WebRtcCameraPlayer(
             .setVideoDecoderFactory(DefaultVideoDecoderFactory(eglBase.eglBaseContext))
             .setVideoEncoderFactory(
                 DefaultVideoEncoderFactory(eglBase.eglBaseContext, true, true)
-            )
-            .createPeerConnectionFactory()
+            ).createPeerConnectionFactory()
     }
 
     private fun createOffer(connection: PeerConnection): SessionDescription {
@@ -169,11 +169,13 @@ class WebRtcCameraPlayer(
                 offer = description
                 latch.countDown()
             }
+
             override fun onSetSuccess() = Unit
             override fun onCreateFailure(message: String) {
                 error = message
                 latch.countDown()
             }
+
             override fun onSetFailure(message: String) = Unit
         }, MediaConstraints())
         if (!latch.await(10, TimeUnit.SECONDS)) {
@@ -191,6 +193,7 @@ class WebRtcCameraPlayer(
             override fun onSetSuccess() {
                 latch.countDown()
             }
+
             override fun onCreateFailure(message: String) = Unit
             override fun onSetFailure(message: String) {
                 error = message
@@ -213,10 +216,9 @@ class WebRtcCameraPlayer(
     private fun postOffer(whepUrl: String, token: String, offerSdp: String): String {
         val encodedToken = URLEncoder.encode(token, Charsets.UTF_8.name())
         val url = "$whepUrl?token=$encodedToken"
-        val request = Request.Builder()
-            .url(url)
-            .post(offerSdp.toRequestBody("application/sdp".toMediaType()))
-            .build()
+        val request =
+            Request.Builder().url(url).post(offerSdp.toRequestBody("application/sdp".toMediaType()))
+                .build()
         val call = httpClient.newCall(request)
         currentCall = call
         call.execute().use { response ->
@@ -238,6 +240,7 @@ class WebRtcCameraPlayer(
             override fun onSetSuccess() {
                 latch.countDown()
             }
+
             override fun onCreateFailure(message: String) = Unit
             override fun onSetFailure(message: String) {
                 error = message
