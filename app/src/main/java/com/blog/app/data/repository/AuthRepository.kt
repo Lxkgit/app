@@ -33,7 +33,7 @@ class AuthRepository {
     private fun authorizationService(context: Context): AuthorizationService {
         val appAuthConfiguration = AppAuthConfiguration.Builder()
             .setConnectionBuilder(OAuthConnectionBuilder(ApiConfig.BASE_URL))
-            .setSkipIssuerHttpsCheck(ApiConfig.AUTH_BASE_URL.startsWith("http://"))
+            .setSkipIssuerHttpsCheck(ApiConfig.BASE_URL.startsWith("http://"))
             .build()
         return AuthorizationService(context, appAuthConfiguration)
     }
