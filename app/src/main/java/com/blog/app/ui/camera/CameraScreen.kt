@@ -88,7 +88,7 @@ fun CameraScreen(
             controller.hide(WindowInsetsCompat.Type.systemBars())
             controller.systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            renderer?.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL)
+            renderer?.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
         } else {
             controller.show(WindowInsetsCompat.Type.systemBars())
             WindowCompat.setDecorFitsSystemWindows(activity.window, true)
@@ -138,7 +138,7 @@ fun CameraScreen(
     LaunchedEffect(renderer, retryKey) {
         renderer?.setScalingType(
             if (fullScreen) {
-                RendererCommon.ScalingType.SCALE_ASPECT_FILL
+                RendererCommon.ScalingType.SCALE_ASPECT_FIT
             } else {
                 RendererCommon.ScalingType.SCALE_ASPECT_FIT
             }
@@ -205,27 +205,19 @@ fun CameraScreen(
                     }
                 )
 
-                if (fullScreen && controlsVisible) {
+                if (fullScreen) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.BottomCenter)
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(
-                                        Color.Transparent,
-                                        Color.Black.copy(alpha = 0.72f)
-                                    )
-                                )
-                            )
-                            .padding(horizontal = 16.dp, vertical = 18.dp)
-                    ) {
-                        Text(
-                            if (state.playing) "已连接 · CAM 01" else "正在建立连接",
-                            color = Color.White.copy(alpha = 0.78f),
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
+                            .fillMaxSize()
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember {
+                                    androidx.compose.foundation.interaction.MutableInteractionSource()
+                                }
+                            ) {
+                                controlsVisible = !controlsVisible
+                            }
+                    )
                 }
 
                 if (state.isLoading) {
@@ -261,24 +253,17 @@ fun CameraScreen(
                 }
 
                 if (!fullScreen) {
-                    Box(
+                    IconButton(
+                        onClick = { fullScreen = true },
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(16.dp)
-                            .background(
-                                Color.Black.copy(alpha = 0.58f),
-                                androidx.compose.foundation.shape.CircleShape
-                            )
+                            .padding(12.dp)
                     ) {
-                        IconButton(
-                            onClick = { fullScreen = true }
-                        ) {
-                            Icon(
-                                Icons.Default.Fullscreen,
-                                contentDescription = "全屏",
-                                tint = Color.White
-                            )
-                        }
+                        Icon(
+                            Icons.Default.Fullscreen,
+                            contentDescription = "全屏",
+                            tint = Color.White
+                        )
                     }
                 }
 
@@ -297,11 +282,15 @@ fun CameraScreen(
                             )
                             .padding(horizontal = 16.dp, vertical = 14.dp)
                     ) {
+                        Text(
+                            if (state.playing) "已连接 · CAM 01" else "正在建立连接",
+                            color = Color.White.copy(alpha = 0.78f),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.align(Alignment.CenterStart)
+                        )
+
                         IconButton(
-                            onClick = {
-                                fullScreen = false
-                                controlsVisible = true
-                            },
+                            onClick = { fullScreen = false },
                             modifier = Modifier.align(Alignment.CenterEnd)
                         ) {
                             Icon(
