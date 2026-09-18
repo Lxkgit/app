@@ -22,7 +22,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,7 +47,6 @@ import com.blog.app.data.model.menu.UserMenu
 /**
  * 个人页面。
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserScreen(
     onLogin: () -> Unit,
@@ -60,15 +58,8 @@ fun UserScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        viewModel.refresh()
-    }
-
-    LaunchedEffect(refreshKey) {
-        if (refreshKey > 0) {
-            viewModel.refresh()
-        }
-    }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
+    LaunchedEffect(refreshKey) { if (refreshKey > 0) viewModel.refresh() }
 
     Scaffold(
         topBar = {
@@ -83,75 +74,52 @@ fun UserScreen(
         }
     ) { padding ->
         if (state.loggedIn) {
-            UserInfoView(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                state = state,
-                onFileManager = onFileManager,
-                onCamera = onCamera
-            )
+            UserInfoView(Modifier.fillMaxSize().padding(padding), state, onFileManager, onCamera)
         } else {
-            LoginView(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                isLoading = state.isLoading,
-                errorMessage = state.errorMessage,
-                onLogin = {
-                    viewModel.beginLogin()
-                    onLogin()
-                }
-            )
+            LoginView(Modifier.fillMaxSize().padding(padding), state.isLoading, state.errorMessage, onLogin)
         }
     }
 }
 
 /**
- * 显示博客登录入口。
+ * 登录入口。
  */
 @Composable
-private fun LoginView(
-    modifier: Modifier,
-    isLoading: Boolean,
-    errorMessage: String?,
-    onLogin: () -> Unit
-) {
+private fun LoginView(modifier: Modifier, isLoading: Boolean, errorMessage: String?, onLogin: () -> Unit) {
     Column(
         modifier = modifier.padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("登录博客", style = MaterialTheme.typography.headlineMedium)
-        Text("点击登录后将在应用内完成博客账号认证。", style = MaterialTheme.typography.bodyMedium)
-        if (!errorMessage.isNullOrBlank()) {
-            Text(errorMessage, color = MaterialTheme.colorScheme.error)
-        }
-        Button(
-            onClick = onLogin,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+        Card(
+            modifier = Modifier.size(76.dp),
+            shape = CircleShape,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
         ) {
-            if (isLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp)) else Text("登录博客")
+            BoxCenter { Text("B", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary) }
+        }
+        Text("登录博客", style = MaterialTheme.typography.headlineSmall)
+        Text("登录后访问你的文章、文件和设备", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (!errorMessage.isNullOrBlank()) Text(errorMessage, color = MaterialTheme.colorScheme.error)
+        Button(onClick = onLogin, enabled = !isLoading, modifier = Modifier.fillMaxWidth()) {
+            if (isLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp)) else Text("登录")
         }
     }
 }
 
 /**
- * 显示用户资料和权限菜单。
+ * 用户信息和功能入口。
  */
 @Composable
-private fun UserInfoView(
-    modifier: Modifier,
-    state: UserUiState,
-    onFileManager: () -> Unit,
-    onCamera: () -> Unit
-) {
+private fun UserInfoView(modifier: Modifier, state: UserUiState, onFileManager: () -> Unit, onCamera: () -> Unit) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier,
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentPadding = PaddingValues(14.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            UserHeader(state)
-        }
+        item(span = { GridItemSpan(maxLineSpan) }) { UserHeader(state) }
 
         if (!state.errorMessage.isNullOrBlank()) {
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -159,37 +127,15 @@ private fun UserInfoView(
             }
         }
 
-        if (state.isLoading) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                }
-            }
-        }
-
         state.menus.forEach { category ->
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    category.menuName,
-                    modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Text(category.menuName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 6.dp, start = 2.dp))
             }
-
             items(category.children, key = { it.id }) { menu ->
-                PermissionCard(
-                    menu = menu,
-                    onClick = if (menu.menuName == "文件云盘") onFileManager else null
-                )
+                PermissionCard(menu, if (menu.menuName == "文件云盘") onFileManager else null)
             }
-
-            if (category.menuName == "设备管理") {
-                item {
-                    CameraPermissionCard(onClick = onCamera)
-                }
+            if (category.menuName == "设备管理") item {
+                CameraPermissionCard(onCamera)
             }
         }
     }
@@ -200,90 +146,93 @@ private fun UserInfoView(
  */
 @Composable
 private fun CameraPermissionCard(onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(108.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Icon(
-                Icons.Default.Videocam,
-                contentDescription = null,
-                modifier = Modifier.size(28.dp)
-            )
-            Text("摄像头", style = MaterialTheme.typography.titleMedium)
-            Text("实时查看", style = MaterialTheme.typography.bodySmall)
-        }
-    }
+    SmallFunctionCard(
+        title = "摄像头",
+        subtitle = "实时查看",
+        icon = { Icon(Icons.Default.Videocam, null, Modifier.size(24.dp)) },
+        onClick = onClick
+    )
 }
 
 /**
- * 用户头像和登录信息。
+ * 用户头像区域。
  */
 @Composable
 private fun UserHeader(state: UserUiState) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.padding(18.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             if (state.avatar.isNotBlank()) {
                 AsyncImage(
                     model = state.avatar,
                     contentDescription = "用户头像",
-                    modifier = Modifier.size(64.dp).clip(CircleShape),
+                    modifier = Modifier.size(58.dp).clip(CircleShape),
                     contentScale = ContentScale.Crop
                 )
             } else {
-                Card(modifier = Modifier.size(64.dp), shape = CircleShape) {
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(state.username.take(1).uppercase(), style = MaterialTheme.typography.headlineSmall)
-                    }
+                Card(modifier = Modifier.size(58.dp), shape = CircleShape) {
+                    BoxCenter { Text(state.username.take(1).uppercase(), style = MaterialTheme.typography.headlineSmall) }
                 }
             }
-            Column(modifier = Modifier.padding(start = 14.dp)) {
+            Column(Modifier.padding(start = 14.dp)) {
                 Text(state.username, style = MaterialTheme.typography.titleLarge)
-                Text("已登录", style = MaterialTheme.typography.bodyMedium)
+                Text("账号已登录", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f))
             }
         }
     }
 }
 
 /**
- * 单个权限菜单卡片。
+ * 权限入口卡片。
  */
 @Composable
 private fun PermissionCard(menu: UserMenu, onClick: (() -> Unit)?) {
+    SmallFunctionCard(
+        title = menu.menuName,
+        subtitle = if (menu.menuName == "文件云盘") "文件管理" else "功能入口",
+        icon = {
+            Icon(
+                if (menu.menuName == "文件云盘") Icons.Default.Folder else Icons.Default.Apps,
+                null,
+                Modifier.size(24.dp)
+            )
+        },
+        onClick = onClick
+    )
+}
+
+/**
+ * 紧凑功能卡片。
+ */
+@Composable
+private fun SmallFunctionCard(title: String, subtitle: String, icon: @Composable () -> Unit, onClick: (() -> Unit)?) {
     Card(
         onClick = { onClick?.invoke() },
-        modifier = Modifier.fillMaxWidth().height(108.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        modifier = Modifier.fillMaxWidth().height(94.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Icon(
-                imageVector = if (menu.menuName == "文件云盘") Icons.Default.Folder else Icons.Default.Apps,
-                contentDescription = null,
-                modifier = Modifier.size(28.dp)
-            )
-            Text(menu.menuName, style = MaterialTheme.typography.titleMedium)
-            Text(
-                if (menu.menuName == "文件云盘") "文件管理" else "功能入口",
-                style = MaterialTheme.typography.bodySmall
-            )
+        Column(Modifier.fillMaxSize().padding(13.dp), verticalArrangement = Arrangement.SpaceBetween) {
+            icon()
+            Column {
+                Text(title, maxLines = 1, style = MaterialTheme.typography.titleSmall)
+                Text(subtitle, maxLines = 1, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
     }
+}
+
+/**
+ * 居中容器。
+ */
+@Composable
+private fun BoxCenter(content: @Composable () -> Unit) {
+    androidx.compose.foundation.layout.Box(
+        Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+        content = { content() }
+    )
 }
