@@ -1,7 +1,7 @@
 package com.blog.app.data.repository
 
 import com.blog.app.core.network.NetworkModule
-import com.blog.app.data.api.ArticleApi
+import com.blog.app.data.api.content.ArticleApi
 import com.blog.app.data.model.article.Article
 import com.blog.app.data.model.article.ArticleLabel
 import com.blog.app.data.model.article.ArticlePage
