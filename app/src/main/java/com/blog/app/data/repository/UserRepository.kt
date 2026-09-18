@@ -11,7 +11,7 @@ import kotlinx.serialization.json.jsonPrimitive
  * 用户资料数据仓库。
  */
 class UserRepository(
-    private val api: UserApi = NetworkModule.createAuth(UserApi::class.java)
+    private val api: UserApi = NetworkModule.create(UserApi::class.java)
 ) {
     /**
      * 获取当前登录用户的资料。
