@@ -99,24 +99,24 @@ fun AppNavigation(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar(modifier = Modifier.height(56.dp)) {
+            NavigationBar(modifier = Modifier.height(68.dp)) {
                 NavigationBarItem(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
                     icon = { Icon(painterResource(R.drawable.icon_home), "首页") },
-                    label = null
+                    label = { Text("首页") }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
                     icon = { Icon(painterResource(R.drawable.icon_article), "文章") },
-                    label = null
+                    label = { Text("文章") }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
                     icon = { Icon(painterResource(R.drawable.icon_user), "我的") },
-                    label = null
+                    label = { Text("我的") }
                 )
             }
         }
