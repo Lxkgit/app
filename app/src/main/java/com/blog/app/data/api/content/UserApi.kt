@@ -11,7 +11,7 @@ interface UserApi {
     /**
      * 根据用户名获取当前用户资料。
      */
-    @GET("user/username")
+    @GET("api/content/user/username")
     suspend fun getUserByUsername(
         @Query("username") username: String
     ): JsonElement
