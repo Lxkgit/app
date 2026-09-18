@@ -10,7 +10,7 @@ import kotlinx.serialization.json.longOrNull
  * 摄像头数据仓库。
  */
 class CameraRepository(
-    private val api: CameraApi = NetworkModule.createFile(CameraApi::class.java)
+    private val api: CameraApi = NetworkModule.create(CameraApi::class.java)
 ) {
     /**
      * 获取指定摄像头的临时播放 Token。
