@@ -137,7 +137,7 @@ private fun UserInfoView(modifier: Modifier, state: UserUiState, onFileManager: 
                     menu,
                     when (menu.menuName) {
                         "文件云盘" -> onFileManager
-                        "设备管理" -> onCamera
+                        "摄像头" -> onCamera
                         else -> null
                     }
                 )
