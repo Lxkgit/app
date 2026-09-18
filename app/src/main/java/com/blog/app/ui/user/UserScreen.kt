@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -114,7 +115,7 @@ private fun LoginView(modifier: Modifier, isLoading: Boolean, errorMessage: Stri
 @Composable
 private fun UserInfoView(modifier: Modifier, state: UserUiState, onFileManager: () -> Unit, onCamera: () -> Unit) {
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+        columns = GridCells.Fixed(3),
         modifier = modifier,
         contentPadding = PaddingValues(14.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -130,7 +131,7 @@ private fun UserInfoView(modifier: Modifier, state: UserUiState, onFileManager: 
 
         state.menus.forEach { category ->
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(category.menuName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 6.dp, start = 2.dp))
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) { Text(category.menuName, style = MaterialTheme.typography.titleMedium) }
             }
             items(category.children, key = { it.id }) { menu ->
                 PermissionCard(
@@ -161,11 +162,11 @@ private fun UserHeader(state: UserUiState) {
                 AsyncImage(
                     model = state.avatar,
                     contentDescription = "用户头像",
-                    modifier = Modifier.size(58.dp).clip(CircleShape),
+                    modifier = Modifier.size(64.dp).clip(CircleShape),
                     contentScale = ContentScale.Crop
                 )
             } else {
-                Card(modifier = Modifier.size(58.dp), shape = CircleShape) {
+                Card(modifier = Modifier.size(64.dp), shape = CircleShape, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     BoxCenter { Text(state.username.take(1).uppercase(), style = MaterialTheme.typography.headlineSmall) }
                 }
             }
@@ -186,12 +187,17 @@ private fun PermissionCard(menu: UserMenu, onClick: (() -> Unit)?) {
         title = menu.menuName,
         subtitle = when (menu.menuName) {
             "文件云盘" -> "文件管理"
-            "设备管理" -> "设备管理"
+            "摄像头" -> "实时视频"
+            "服务器设备" -> "设备管理"
             else -> "功能入口"
         },
         icon = {
             Icon(
-                if (menu.menuName == "文件云盘") Icons.Default.Folder else Icons.Default.Apps,
+                when (menu.menuName) {
+                    "文件云盘" -> Icons.Default.Folder
+                    "摄像头" -> Icons.Default.Videocam
+                    else -> Icons.Default.Apps
+                },
                 null,
                 Modifier.size(24.dp)
             )
@@ -207,11 +213,11 @@ private fun PermissionCard(menu: UserMenu, onClick: (() -> Unit)?) {
 private fun SmallFunctionCard(title: String, subtitle: String, icon: @Composable () -> Unit, onClick: (() -> Unit)?) {
     Card(
         onClick = { onClick?.invoke() },
-        modifier = Modifier.fillMaxWidth().height(94.dp),
+        modifier = Modifier.fillMaxWidth().height(104.dp),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Column(Modifier.fillMaxSize().padding(13.dp), verticalArrangement = Arrangement.SpaceBetween) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 11.dp), verticalArrangement = Arrangement.SpaceBetween) {
             icon()
             Column {
                 Text(title, maxLines = 1, style = MaterialTheme.typography.titleSmall)
