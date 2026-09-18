@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.FullscreenExit
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -41,6 +42,7 @@ import org.webrtc.SurfaceViewRenderer
 /**
  * 摄像头监控页面。
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraScreen(
     onBack: () -> Unit,
