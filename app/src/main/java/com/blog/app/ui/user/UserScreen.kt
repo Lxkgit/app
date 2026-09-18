@@ -17,7 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -134,26 +133,17 @@ private fun UserInfoView(modifier: Modifier, state: UserUiState, onFileManager: 
                 Text(category.menuName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 6.dp, start = 2.dp))
             }
             items(category.children, key = { it.id }) { menu ->
-                PermissionCard(menu, if (menu.menuName == "文件云盘") onFileManager else null)
-            }
-            if (category.menuName == "设备管理") item {
-                CameraPermissionCard(onCamera)
+                PermissionCard(
+                    menu,
+                    when (menu.menuName) {
+                        "文件云盘" -> onFileManager
+                        "设备管理" -> onCamera
+                        else -> null
+                    }
+                )
             }
         }
     }
-}
-
-/**
- * 摄像头入口。
- */
-@Composable
-private fun CameraPermissionCard(onClick: () -> Unit) {
-    SmallFunctionCard(
-        title = "摄像头",
-        subtitle = "实时查看",
-        icon = { Icon(Icons.Default.Videocam, null, Modifier.size(24.dp)) },
-        onClick = onClick
-    )
 }
 
 /**
@@ -194,7 +184,11 @@ private fun UserHeader(state: UserUiState) {
 private fun PermissionCard(menu: UserMenu, onClick: (() -> Unit)?) {
     SmallFunctionCard(
         title = menu.menuName,
-        subtitle = if (menu.menuName == "文件云盘") "文件管理" else "功能入口",
+        subtitle = when (menu.menuName) {
+            "文件云盘" -> "文件管理"
+            "设备管理" -> "设备管理"
+            else -> "功能入口"
+        },
         icon = {
             Icon(
                 if (menu.menuName == "文件云盘") Icons.Default.Folder else Icons.Default.Apps,
