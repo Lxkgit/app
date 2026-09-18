@@ -47,7 +47,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.webrtc.RendererCommon
-import org.webrtc.TextureViewRenderer
+import org.webrtc.SurfaceViewRenderer
 
 /**
  * 摄像头监控页面。
@@ -59,7 +59,7 @@ fun CameraScreen(
     viewModel: CameraViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    var renderer by remember { mutableStateOf<TextureViewRenderer?>(null) }
+    var renderer by remember { mutableStateOf<SurfaceViewRenderer?>(null) }
     var player by remember { mutableStateOf<WebRtcCameraPlayer?>(null) }
     var retryKey by remember { mutableIntStateOf(0) }
     var fullScreen by remember { mutableStateOf(false) }
@@ -198,7 +198,7 @@ fun CameraScreen(
                 AndroidView(
                     modifier = Modifier.fillMaxSize(),
                     factory = { context ->
-                        TextureViewRenderer(context).also {
+                        SurfaceViewRenderer(context).also {
                             renderer = it
                             player = WebRtcCameraPlayer(context, it)
                         }
