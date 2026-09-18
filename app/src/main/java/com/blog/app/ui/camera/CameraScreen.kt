@@ -101,6 +101,24 @@ fun CameraScreen(
     LaunchedEffect(fullScreen) {
         updateFullScreenWindow(fullScreen)
         controlsVisible = true
+
+        // 横竖屏切换后 SurfaceViewRenderer 需要等父布局尺寸稳定后再重新测量。
+        // 分阶段请求布局，避免旋转过程中使用旧的 Surface 尺寸导致画面瞬间缩小或放大。
+        val currentRenderer = renderer
+        if (currentRenderer != null) {
+            currentRenderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
+
+            kotlinx.coroutines.delay(100)
+            currentRenderer.requestLayout()
+
+            kotlinx.coroutines.delay(300)
+            currentRenderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
+            currentRenderer.requestLayout()
+
+            kotlinx.coroutines.delay(500)
+            currentRenderer.requestLayout()
+            currentRenderer.invalidate()
+        }
     }
 
     LaunchedEffect(fullScreen, controlsVisible) {
