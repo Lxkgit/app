@@ -195,26 +195,15 @@ fun CameraScreen(
                 }.background(Color.Black),
                 contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = if (fullScreen) {
-                        Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(16f / 9f)
-                            .align(Alignment.Center)
-                    } else {
-                        Modifier.fillMaxSize()
-                    }
-                ) {
-                    AndroidView(
-                        modifier = Modifier.fillMaxSize(),
-                        factory = { context ->
-                            SurfaceViewRenderer(context).also {
-                                renderer = it
-                                player = WebRtcCameraPlayer(context, it)
-                            }
+                AndroidView(
+                    modifier = Modifier.fillMaxSize(),
+                    factory = { context ->
+                        SurfaceViewRenderer(context).also {
+                            renderer = it
+                            player = WebRtcCameraPlayer(context, it)
                         }
-                    )
-                }
+                    }
+                )
 
                 if (fullScreen) {
                     Box(
