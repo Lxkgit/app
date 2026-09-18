@@ -180,12 +180,18 @@ class AuthRepository {
             Log.d(TAG, "开始使用 refresh_token 刷新 access_token")
             authorizationService.performTokenRequest(tokenRequest) { tokenResponse, tokenException ->
                 try {
-                    if (tokenResponse == null || tokenResponse.accessToken.isNullOrBlank()) {
+                    if (tokenResponse == null) {
                         Log.e(TAG, "refresh_token 刷新失败", tokenException)
                         return@performTokenRequest
                     }
 
                     val newAccessToken = tokenResponse.accessToken
+                        ?.takeIf { it.isNotBlank() }
+                        ?: run {
+                            Log.e(TAG, "refresh_token 刷新失败：没有返回 access_token", tokenException)
+                            return@performTokenRequest
+                        }
+
                     val newRefreshToken = tokenResponse.refreshToken ?: refreshToken
                     val expiresIn = tokenResponse.accessTokenExpirationTime?.let { expirationTime ->
                         ((expirationTime - System.currentTimeMillis()).coerceAtLeast(0L) / 1000L)
