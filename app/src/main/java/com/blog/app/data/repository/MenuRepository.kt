@@ -1,6 +1,6 @@
 package com.blog.app.data.repository
 
-import com.blog.app.data.api.MenuApi
+import com.blog.app.data.api.content.MenuApi
 import com.blog.app.data.model.menu.UserMenu
 import com.blog.app.core.network.NetworkModule
 import kotlinx.serialization.json.JsonArray
