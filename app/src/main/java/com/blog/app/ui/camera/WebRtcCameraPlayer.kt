@@ -7,6 +7,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Call
 import org.webrtc.DefaultVideoDecoderFactory
 import org.webrtc.DefaultVideoEncoderFactory
 import org.webrtc.EglBase
@@ -43,6 +44,9 @@ class WebRtcCameraPlayer(
     private var peerConnection: PeerConnection? = null
     private var videoTrack: VideoTrack? = null
     private var iceGatheringLatch: CountDownLatch? = null
+    private var currentCall: Call? = null
+    @Volatile
+    private var stopped = false
 
     init {
         initializeFactory()
@@ -55,6 +59,7 @@ class WebRtcCameraPlayer(
      * 建立 WHEP 播放连接。
      */
     suspend fun play(whepUrl: String, token: String) = withContext(Dispatchers.IO) {
+        stopped = false
         closePeerConnection()
 
         val peerConnectionFactory = factory ?: throw IllegalStateException("WebRTC 初始化失败")
@@ -105,6 +110,8 @@ class WebRtcCameraPlayer(
         setLocalDescription(connection, offer)
         waitForIceGathering(connection)
 
+        if (stopped) throw kotlinx.coroutines.CancellationException()
+
         val localDescription = connection.localDescription
             ?: throw IllegalStateException("WebRTC 本地 SDP 创建失败")
         val answer = postOffer(whepUrl, token, localDescription.description)
@@ -114,8 +121,19 @@ class WebRtcCameraPlayer(
     /**
      * 释放播放器资源。
      */
-    fun release() {
+    fun stop() {
+        stopped = true
+        currentCall?.cancel()
+        currentCall = null
+        iceGatheringLatch?.countDown()
         closePeerConnection()
+    }
+
+    /**
+     * 释放播放器全部资源。
+     */
+    fun release() {
+        stop()
         renderer.release()
         factory?.dispose()
         factory = null
@@ -199,7 +217,10 @@ class WebRtcCameraPlayer(
             .url(url)
             .post(offerSdp.toRequestBody("application/sdp".toMediaType()))
             .build()
-        httpClient.newCall(request).execute().use { response ->
+        val call = httpClient.newCall(request)
+        currentCall = call
+        call.execute().use { response ->
+            currentCall = null
             if (!response.isSuccessful) {
                 throw IllegalStateException("摄像头连接失败：HTTP ${response.code}")
             }
