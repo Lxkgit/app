@@ -9,15 +9,18 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -33,14 +36,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.blog.app.R
-import androidx.compose.ui.res.painterResource
 import org.webrtc.SurfaceViewRenderer
 
 /**
  * 摄像头监控页面。
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraScreen(
     onBack: () -> Unit,
@@ -50,11 +50,16 @@ fun CameraScreen(
     var renderer by remember { mutableStateOf<SurfaceViewRenderer?>(null) }
     var player by remember { mutableStateOf<WebRtcCameraPlayer?>(null) }
     var retryKey by remember { mutableIntStateOf(0) }
+    var fullScreen by remember { mutableStateOf(false) }
 
-    BackHandler(onBack = {
-        viewModel.stop(player)
-        onBack()
-    })
+    BackHandler {
+        if (fullScreen) {
+            fullScreen = false
+        } else {
+            viewModel.stop(player)
+            onBack()
+        }
+    }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -71,41 +76,59 @@ fun CameraScreen(
         viewModel.play(currentPlayer)
     }
 
+    if (fullScreen) {
+        Box(Modifier.fillMaxSize().background(Color.Black)) {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { renderer ?: SurfaceViewRenderer(it).also { view -> renderer = view } }
+            )
+            IconButton(
+                onClick = { fullScreen = false },
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 28.dp, end = 8.dp)
+            ) {
+                Icon(Icons.Default.FullscreenExit, "退出全屏", tint = Color.White)
+            }
+            Text(
+                "● LIVE  ·  CAM 01",
+                modifier = Modifier.align(Alignment.TopStart).padding(start = 16.dp, top = 32.dp),
+                color = Color.White,
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+        return
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("摄像头监控") },
+                title = { Text("摄像头") },
                 navigationIcon = {
                     IconButton(onClick = {
                         viewModel.stop(player)
                         onBack()
                     }) {
-                        Icon(
-                            painter = painterResource(R.drawable.icon_back),
-                            contentDescription = "返回"
-                        )
+                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { fullScreen = true }) {
+                        Icon(Icons.Default.Fullscreen, contentDescription = "全屏")
                     }
                 }
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            verticalArrangement = Arrangement.Top
-        ) {
+        Column(Modifier.fillMaxSize().padding(padding)) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(16f / 9f)
-                    .background(Color.Black),
+                Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Color.Black),
                 contentAlignment = Alignment.Center
             ) {
                 AndroidView(
                     modifier = Modifier.fillMaxSize(),
                     factory = { context ->
-                        SurfaceViewRenderer(context).also { surfaceViewRenderer ->
-                            renderer = surfaceViewRenderer
-                            player = WebRtcCameraPlayer(context, surfaceViewRenderer)
+                        SurfaceViewRenderer(context).also {
+                            renderer = it
+                            player = WebRtcCameraPlayer(context, it)
                         }
                     }
                 )
@@ -113,25 +136,17 @@ fun CameraScreen(
                 if (state.isLoading) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
-                        Text(
-                            "正在连接摄像头...",
-                            modifier = Modifier.padding(top = 12.dp),
-                            color = Color.White
-                        )
+                        Text("正在连接摄像头...", Modifier.padding(top = 10.dp), color = Color.White)
                     }
                 }
 
                 if (!state.errorMessage.isNullOrBlank()) {
                     Column(
-                        modifier = Modifier.padding(24.dp),
+                        Modifier.padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            state.errorMessage.orEmpty(),
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        Text(state.errorMessage.orEmpty(), color = Color.White)
                         Button(onClick = {
                             retryKey++
                             viewModel.clearError()
@@ -140,6 +155,15 @@ fun CameraScreen(
                         }
                     }
                 }
+            }
+
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("摄像头 01", style = MaterialTheme.typography.titleLarge)
+                Text(
+                    if (state.playing) "● 实时监控 · 已连接" else "正在建立连接",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (state.playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
