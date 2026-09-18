@@ -17,6 +17,7 @@ import org.webrtc.MediaStream
 import org.webrtc.MediaStreamTrack
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
+import org.webrtc.RendererCommon
 import org.webrtc.RtpTransceiver
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
@@ -50,6 +51,7 @@ class WebRtcCameraPlayer(
         renderer.init(eglBase.eglBaseContext, null)
         renderer.setEnableHardwareScaler(true)
         renderer.setMirror(false)
+        renderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
     }
 
     /**
