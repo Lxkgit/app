@@ -20,6 +20,7 @@ import org.json.JSONObject
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
+import androidx.core.net.toUri
 
 /**
  * 处理博客服务的 OAuth2 授权码和 PKCE 登录流程。
@@ -27,8 +28,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 class AuthRepository {
     private fun serviceConfiguration(): AuthorizationServiceConfiguration {
         return AuthorizationServiceConfiguration(
-            Uri.parse(ApiConfig.OAUTH_AUTHORIZATION_ENDPOINT),
-            Uri.parse(ApiConfig.OAUTH_TOKEN_ENDPOINT)
+            ApiConfig.OAUTH_AUTHORIZATION_ENDPOINT.toUri(),
+            ApiConfig.OAUTH_TOKEN_ENDPOINT.toUri()
         )
     }
 
@@ -52,7 +53,7 @@ class AuthRepository {
             serviceConfiguration(),
             ApiConfig.OAUTH_CLIENT_ID,
             ResponseTypeValues.CODE,
-            Uri.parse(ApiConfig.OAUTH_REDIRECT_URI)
+            ApiConfig.OAUTH_REDIRECT_URI.toUri()
         )
             .setScope("openid")
             .setState(state)
@@ -104,7 +105,7 @@ class AuthRepository {
         )
             .setGrantType("authorization_code")
             .setAuthorizationCode(code)
-            .setRedirectUri(Uri.parse(ApiConfig.OAUTH_REDIRECT_URI))
+            .setRedirectUri(ApiConfig.OAUTH_REDIRECT_URI.toUri())
             .setCodeVerifier(request.codeVerifier)
             .setNonce(request.nonce)
             .build()
@@ -116,7 +117,11 @@ class AuthRepository {
             try {
                 if (tokenResponse == null) {
                     Log.e(TAG, "token endpoint 请求失败", tokenException)
-                    onResult(Result.failure(tokenException ?: IllegalStateException("获取登录令牌失败")))
+                    onResult(
+                        Result.failure(
+                            tokenException ?: IllegalStateException("获取登录令牌失败")
+                        )
+                    )
                     return@performTokenRequest
                 }
 
@@ -188,7 +193,11 @@ class AuthRepository {
                     val newAccessToken = tokenResponse.accessToken
                         ?.takeIf { it.isNotBlank() }
                         ?: run {
-                            Log.e(TAG, "refresh_token 刷新失败：没有返回 access_token", tokenException)
+                            Log.e(
+                                TAG,
+                                "refresh_token 刷新失败：没有返回 access_token",
+                                tokenException
+                            )
                             return@performTokenRequest
                         }
 
