@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.pm.ActivityInfo
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -61,6 +63,7 @@ fun CameraScreen(
     var player by remember { mutableStateOf<WebRtcCameraPlayer?>(null) }
     var retryKey by remember { mutableIntStateOf(0) }
     var fullScreen by remember { mutableStateOf(false) }
+    var controlsVisible by remember { mutableStateOf(true) }
     val activity = LocalContext.current as? Activity
 
     /**
@@ -95,6 +98,14 @@ fun CameraScreen(
 
     LaunchedEffect(fullScreen) {
         updateFullScreenWindow(fullScreen)
+        controlsVisible = true
+    }
+
+    LaunchedEffect(fullScreen, controlsVisible) {
+        if (fullScreen && controlsVisible) {
+            kotlinx.coroutines.delay(3500)
+            controlsVisible = false
+        }
     }
 
     BackHandler {
@@ -194,6 +205,52 @@ fun CameraScreen(
                     }
                 )
 
+                if (fullScreen) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                            ) {
+                                controlsVisible = true
+                            }
+                    ) {
+                        if (controlsVisible) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .align(Alignment.BottomCenter)
+                                    .background(
+                                        Brush.verticalGradient(
+                                            listOf(
+                                                Color.Transparent,
+                                                Color.Black.copy(alpha = 0.72f)
+                                            )
+                                        )
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 18.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    Text(
+                                        "实时监控",
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(
+                                        if (state.playing) "已连接 · CAM 01" else "正在建立连接",
+                                        color = Color.White.copy(alpha = 0.78f),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
                 if (state.isLoading) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -226,36 +283,54 @@ fun CameraScreen(
                     }
                 }
 
-                IconButton(
-                    onClick = { fullScreen = !fullScreen },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(12.dp)
-                ) {
-                    Icon(
-                        if (fullScreen) {
-                            Icons.Default.FullscreenExit
-                        } else {
-                            Icons.Default.Fullscreen
-                        },
-                        contentDescription = if (fullScreen) {
-                            "退出全屏"
-                        } else {
-                            "全屏"
-                        },
-                        tint = Color.White
-                    )
-                }
-
-                if (fullScreen) {
-                    Text(
-                        "● LIVE  ·  CAM 01",
+                if (!fullScreen || controlsVisible) {
+                    Box(
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .padding(start = 16.dp, top = 16.dp),
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelLarge
-                    )
+                            .padding(16.dp)
+                            .background(
+                                Color.Black.copy(alpha = 0.48f),
+                                MaterialTheme.shapes.small
+                            )
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            if (state.playing) "● LIVE  ·  CAM 01" else "● CONNECTING  ·  CAM 01",
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                        .background(
+                            Color.Black.copy(alpha = 0.58f),
+                            androidx.compose.foundation.shape.CircleShape
+                        )
+                ) {
+                    IconButton(
+                        onClick = {
+                            fullScreen = !fullScreen
+                            controlsVisible = true
+                        }
+                    ) {
+                        Icon(
+                            if (fullScreen) {
+                                Icons.Default.FullscreenExit
+                            } else {
+                                Icons.Default.Fullscreen
+                            },
+                            contentDescription = if (fullScreen) {
+                                "退出全屏"
+                            } else {
+                                "全屏"
+                            },
+                            tint = Color.White
+                        )
+                    }
                 }
             }
 
