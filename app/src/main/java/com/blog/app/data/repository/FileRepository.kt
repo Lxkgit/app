@@ -1,7 +1,7 @@
 package com.blog.app.data.repository
 
 import com.blog.app.core.network.NetworkModule
-import com.blog.app.data.api.FileApi
+import com.blog.app.data.api.file.FileApi
 import com.blog.app.data.model.file.FileDirectory
 import com.blog.app.data.model.file.FileItem
 import kotlinx.serialization.json.JsonArray
