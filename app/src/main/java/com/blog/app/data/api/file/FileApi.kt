@@ -15,7 +15,7 @@ interface FileApi {
     /**
      * 查询当前目录下的子目录。
      */
-    @GET("api/file/dir/select")
+    @GET("file/dir/select")
     suspend fun selectDirectories(
         @Query("dirPath") dirPath: String? = null
     ): JsonElement
@@ -23,7 +23,7 @@ interface FileApi {
     /**
      * 查询当前目录下的文件。
      */
-    @GET("api/file/dir/select/file")
+    @GET("file/dir/select/file")
     suspend fun selectFiles(
         @Query("dirPath") dirPath: String? = null
     ): JsonElement
@@ -31,7 +31,7 @@ interface FileApi {
     /**
      * 创建目录。
      */
-    @POST("api/file/dir/save")
+    @POST("file/dir/save")
     suspend fun createDirectory(
         @Body body: JsonObject
     ): JsonElement
@@ -39,7 +39,7 @@ interface FileApi {
     /**
      * 删除目录。
      */
-    @DELETE("api/file/dir/delete")
+    @DELETE("file/dir/delete")
     suspend fun deleteDirectory(
         @Query("dirPath") dirPath: String,
         @Query("dirName") dirName: String
@@ -48,7 +48,7 @@ interface FileApi {
     /**
      * 删除文件。
      */
-    @DELETE("api/file/dir/delete/file")
+    @DELETE("file/dir/delete/file")
     suspend fun deleteFiles(
         @Query("idList") idList: List<Int>
     ): JsonElement

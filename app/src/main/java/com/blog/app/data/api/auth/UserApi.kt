@@ -1,4 +1,4 @@
-package com.blog.app.data.api.content
+package com.blog.app.data.api.auth
 
 import kotlinx.serialization.json.JsonElement
 import retrofit2.http.GET
@@ -11,7 +11,7 @@ interface UserApi {
     /**
      * 根据用户名获取当前用户资料。
      */
-    @GET("api/content/user/username")
+    @GET("auth/user/username")
     suspend fun getUserByUsername(
         @Query("username") username: String
     ): JsonElement

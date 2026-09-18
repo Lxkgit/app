@@ -11,7 +11,7 @@ interface CameraApi {
     /**
      * 获取摄像头临时播放 Token。
      */
-    @POST("api/file/camera/token")
+    @POST("file/camera/token")
     suspend fun createToken(
         @Query("stream") stream: String
     ): JsonElement

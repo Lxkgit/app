@@ -1,4 +1,4 @@
-package com.blog.app.data.api.content
+package com.blog.app.data.api.auth
 
 import kotlinx.serialization.json.JsonElement
 import retrofit2.http.GET
@@ -11,7 +11,7 @@ interface MenuApi {
     /**
      * 获取当前登录用户的权限菜单。
      */
-    @GET("auth/api/content/menu/list/user")
+    @GET("auth/menu/list/user")
     suspend fun getUserMenus(
         @Query("menuType") menuType: Int = 2
     ): JsonElement
