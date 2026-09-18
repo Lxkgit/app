@@ -1,5 +1,6 @@
 package com.blog.app.ui.camera
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import androidx.activity.compose.BackHandler
@@ -52,6 +53,7 @@ import org.webrtc.SurfaceViewRenderer
 /**
  * 摄像头监控页面。
  */
+@SuppressLint("ContextCastToActivity")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraScreen(
