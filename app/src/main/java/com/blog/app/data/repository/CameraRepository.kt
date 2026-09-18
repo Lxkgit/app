@@ -4,6 +4,7 @@ import com.blog.app.core.network.NetworkModule
 import com.blog.app.data.api.CameraApi
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.longOrNull
 
 /**
  * 摄像头数据仓库。
