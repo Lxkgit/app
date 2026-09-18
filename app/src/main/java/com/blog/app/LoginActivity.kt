@@ -28,7 +28,7 @@ import net.openid.appauth.AuthorizationRequest
  */
 class LoginActivity : ComponentActivity() {
     private val authRepository = AuthRepository()
-    private val authUrlPolicy = OAuthUrlPolicy(ApiConfig.AUTH_BASE_URL)
+    private val authUrlPolicy = OAuthUrlPolicy(ApiConfig.BASE_URL)
     private lateinit var webView: WebView
     private lateinit var progressBar: ProgressBar
     private lateinit var errorView: TextView
