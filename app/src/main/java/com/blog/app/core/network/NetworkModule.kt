@@ -47,9 +47,9 @@ object NetworkModule {
         response.close()
 
         // 服务端主动判定 access_token 失效时，也先尝试 refresh_token。
-        if (refreshAccessToken(currentToken)) {
+        if (!AuthSessionManager.isRefreshRetryRequest(request) && refreshAccessToken(currentToken)) {
             val refreshedToken = AuthStorage.accessToken()
-            val retryRequest = AuthSessionManager.markRetry(request).newBuilder().apply {
+            val retryRequest = AuthSessionManager.markRefreshRetry(request).newBuilder().apply {
                 removeHeader("Authorization")
                 if (!refreshedToken.isNullOrBlank()) {
                     addHeader("Authorization", "Bearer $refreshedToken")
