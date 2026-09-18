@@ -102,7 +102,7 @@ private fun CategoryTree(
         shape = RoundedCornerShape(16.dp)
     ) {
         LazyColumn(
-            modifier = Modifier.fillMaxWidth().height(300.dp),
+            modifier = Modifier.fillMaxWidth().height(220.dp),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
             items(categories, key = { it.id }) { category ->
