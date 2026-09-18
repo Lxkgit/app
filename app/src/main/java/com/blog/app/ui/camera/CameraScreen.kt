@@ -76,51 +76,36 @@ fun CameraScreen(
         viewModel.play(currentPlayer)
     }
 
-    if (fullScreen) {
-        Box(Modifier.fillMaxSize().background(Color.Black)) {
-            AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { renderer ?: SurfaceViewRenderer(it).also { view -> renderer = view } }
-            )
-            IconButton(
-                onClick = { fullScreen = false },
-                modifier = Modifier.align(Alignment.TopEnd).padding(top = 28.dp, end = 8.dp)
-            ) {
-                Icon(Icons.Default.FullscreenExit, "退出全屏", tint = Color.White)
-            }
-            Text(
-                "● LIVE  ·  CAM 01",
-                modifier = Modifier.align(Alignment.TopStart).padding(start = 16.dp, top = 32.dp),
-                color = Color.White,
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
-        return
-    }
-
     Scaffold(
+        containerColor = if (fullScreen) Color.Black else MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text("摄像头") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        viewModel.stop(player)
-                        onBack()
-                    }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+            if (!fullScreen) {
+                TopAppBar(
+                    title = { Text("摄像头") },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            viewModel.stop(player)
+                            onBack()
+                        }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { fullScreen = true }) {
+                            Icon(Icons.Default.Fullscreen, contentDescription = "全屏")
+                        }
                     }
-                },
-                actions = {
-                    IconButton(onClick = { fullScreen = true }) {
-                        Icon(Icons.Default.Fullscreen, contentDescription = "全屏")
-                    }
-                }
-            )
+                )
+            }
         }
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+        Column(Modifier.fillMaxSize().padding(if (fullScreen) androidx.compose.foundation.layout.PaddingValues(0.dp) else padding)) {
             Box(
-                Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Color.Black),
+                modifier = if (fullScreen) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier.fillMaxWidth().aspectRatio(16f / 9f)
+                }.background(Color.Black),
                 contentAlignment = Alignment.Center
             ) {
                 AndroidView(
@@ -155,15 +140,32 @@ fun CameraScreen(
                         }
                     }
                 }
+
+                if (fullScreen) {
+                    Text(
+                        "● LIVE  ·  CAM 01",
+                        modifier = Modifier.align(Alignment.TopStart).padding(start = 16.dp, top = 28.dp),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                    IconButton(
+                        onClick = { fullScreen = false },
+                        modifier = Modifier.align(Alignment.TopEnd).padding(top = 18.dp, end = 8.dp)
+                    ) {
+                        Icon(Icons.Default.FullscreenExit, contentDescription = "退出全屏", tint = Color.White)
+                    }
+                }
             }
 
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("摄像头 01", style = MaterialTheme.typography.titleLarge)
-                Text(
-                    if (state.playing) "● 实时监控 · 已连接" else "正在建立连接",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (state.playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            if (!fullScreen) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("摄像头 01", style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        if (state.playing) "● 实时监控 · 已连接" else "正在建立连接",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (state.playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
