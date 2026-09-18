@@ -1,5 +1,7 @@
 package com.blog.app.ui.camera
 
+import android.app.Activity
+import android.content.pm.ActivityInfo
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,10 +55,29 @@ fun CameraScreen(
     var player by remember { mutableStateOf<WebRtcCameraPlayer?>(null) }
     var retryKey by remember { mutableIntStateOf(0) }
     var fullScreen by remember { mutableStateOf(false) }
+    val activity = (LocalContext.current as? Activity)
+
+    fun enterFullScreen() {
+        fullScreen = true
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        activity?.window?.decorView?.systemUiVisibility =
+            android.view.View.SYSTEM_UI_FLAG_FULLSCREEN or
+                android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+    }
+
+    fun exitFullScreen() {
+        fullScreen = false
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        activity?.window?.decorView?.systemUiVisibility = 0
+    }
 
     BackHandler {
         if (fullScreen) {
-            fullScreen = false
+            exitFullScreen()
         } else {
             viewModel.stop(player)
             onBack()
@@ -64,6 +86,10 @@ fun CameraScreen(
 
     DisposableEffect(Unit) {
         onDispose {
+            if (fullScreen) {
+                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                activity?.window?.decorView?.systemUiVisibility = 0
+            }
             viewModel.stop(player)
             player?.release()
             player = null
@@ -87,10 +113,6 @@ fun CameraScreen(
                         onBack()
                     }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "返回")
-                    }
-                }, actions = {
-                    IconButton(onClick = { fullScreen = true }) {
-                        Icon(Icons.Default.Fullscreen, contentDescription = "全屏")
                     }
                 })
             }
@@ -142,6 +164,21 @@ fun CameraScreen(
                     }
                 }
 
+                if (!fullScreen) {
+                    IconButton(
+                        onClick = { enterFullScreen() },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Fullscreen,
+                            contentDescription = "全屏",
+                            tint = Color.White
+                        )
+                    }
+                }
+
                 if (fullScreen) {
                     Text(
                         "● LIVE  ·  CAM 01",
@@ -152,7 +189,7 @@ fun CameraScreen(
                         style = MaterialTheme.typography.labelLarge
                     )
                     IconButton(
-                        onClick = { fullScreen = false },
+                        onClick = { exitFullScreen() },
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(top = 18.dp, end = 8.dp)
