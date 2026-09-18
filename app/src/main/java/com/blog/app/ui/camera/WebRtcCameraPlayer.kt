@@ -18,7 +18,7 @@ import org.webrtc.MediaStreamTrack
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
 import org.webrtc.RendererCommon
-import org.webrtc.TextureViewRenderer
+import org.webrtc.SurfaceViewRenderer
 import org.webrtc.RtpTransceiver
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
  * MediaMTX WHEP 摄像头播放器。
  */
 class WebRtcCameraPlayer(
-    private val context: Context, private val renderer: TextureViewRenderer
+    private val context: Context, private val renderer: SurfaceViewRenderer
 ) {
     private val eglBase = EglBase.create()
     private val httpClient = OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
